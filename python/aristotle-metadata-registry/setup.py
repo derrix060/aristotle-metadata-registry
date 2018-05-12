@@ -37,9 +37,9 @@ setup(
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
-    install_requires = [
+    install_requires=[
         "Django>=1.11.1,<2.0",
-        'six', # Setuptools > 36 doesn't install this by default
+        'six',  # Setuptools > 36 doesn't install this by default
         'pytz',
         'pyyaml',
         'lesscpy',
@@ -49,10 +49,10 @@ setup(
         'django-braces',
         'docutils',
 
-        #Search requirements
+        # Search requirements
         'django-haystack>=2.7.dev1,<2.8.0',
 
-        #Rich text editors
+        # Rich text editors
         'django-ckeditor>=5.3.0',
         'pillow',
 
