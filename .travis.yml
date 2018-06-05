@@ -5,6 +5,7 @@ sudo: false
 dist: precise
 
 language: python
+python: 3.6
 
 install:
   - pip install tox codecov coveralls
@@ -23,8 +24,8 @@ defaults:
       - |
         case "$DB" in
           mariadb) export DATABASE_URL=mysql://travis:@localhost:3306/aristotle_test_db;;
-         postgres) export DATABASE_URL=postgresql://postgres:@localhost/aristotle_test_db;;
-           sqlite) export DATABASE_URL=sqlite:///./db.db;;
+        postgres) export DATABASE_URL=postgresql://postgres:@localhost/aristotle_test_db;;
+          sqlite) export DATABASE_URL=sqlite:///./db.db;;
                 *) export DATABASE_URL=sqlite:///./db.db;;
         esac
         echo "Running script with DATABASE_URL="$DATABASE_URL
@@ -58,6 +59,22 @@ defaults:
     stage: accessibility
     python: 3.6
     script: ./scripts/tox_if.sh $MODULE ally-$ALLY
+
+  - &deploy_stage
+    stage: deploy-it
+    script: true
+    install: skip
+    after_success: true
+    deploy: &deploy_step
+      provider: pypi
+      user: Samuel.Spencer
+      skip_upload_docs: true
+      password:
+        secure: fNL+70u1QPgkC3+6iLSPBBeo/J1VrwVn6Tg9PdKR3n4X/m6MgAboDc93CfccfsxVxGqsIRBtEfUwRCJ6MrajWqgfQhjQ9KodiYzPVS8vPUQyOtn73AB8iPYKgKX1pFn6UVXcnI67RmtPyJJEUFPbqy5saKZfRpjVRH3vjM2mDJ0=
+      on:
+        branch: master
+      distributions: sdist bdist_wheel
+      repo: aristotle-mdr/aristotle-metadata-registry
 
 jobs:
 
@@ -123,25 +140,24 @@ jobs:
     - <<: *test_accessibility_py36
       env: ALLY=static MODULE=aristotle-metadata-registry
 
+    - <<: *deploy_stage
+      if: branch = master
+      deploy:
+        <<: *deploy_step
+        on:
+          branch: master
 
-    # - stage: deploy
-    #   script: true
-    #   deploy:
-    #     provider: pypi
-    #     user: Samuel.Spencer
-    #     skip_upload_docs: true
-    #     password:
-    #       secure: hJVN74vhyDjG22Ei5/gz0g0d/KfaW2kzjx85c3pT+4jmbTOC3OcGN7Exj+/2wEAygvQDmlijRGJ0yldL3IpE0+N7TASs0/6dNf8fMoG0zRTcuu1ywhUhSgqntRGMjRBpbXeVUeb6ydeAciDkrkmfyuGVQd6bXJQeCxcdU1X5iJ+mnbS9Lu1oUfXt6MZroMImwh+ZCvDn95e8QMFbSmO/3OE7CBtBiCaUMemlgzf1THJsw0JoO/GaU37NEjmsnt6xg8EcXRi/h+Pznnr+8LEs6gqcNRg8uS0mh3e6B3ynvovY6Pr8YdAazG6FTFezc3eQWjViQyBxHGbCcY1z0w7bATa+BT18k2/I6dfF6MFoitPtTmJ9tQEB1HOdL/ngJoYEa2TQxxsCal4qqCWNEgP6O5Jl7uK4u1y00wXQ1M3scGmP1kxu+4DWY9ywfnBvbF8SNKLd4qEkdxQIkZBYd7/4aU/3pHFVE1f+J7LSzLt8gIy/hnLCB23T/DEaLnQJDIBlP4Kcpb277vkayVjuRuGNfU5QXf29Sj4PKvXbVS9gtYDY8U5KheOhb7MmWTlq+WfGvyrpgLfasFQDjWGOqs4oJ4LDO4IJ6BG40LX/OozTXoiT1//DcwDU34SJQlfTiTidZMeOq1fdpQNG84Tig2MkuRnmvO8LF5uIS0I6G3GWP6U=
-    #     on:
-    #       branch: master
-    #       distributions: sdist bdist_wheel
-    #       repo: aristotle-mdr/aristotle-metadata-registry
+    - <<: *deploy_stage
+      deploy:
+        <<: *deploy_step
+        server: https://test.pypi.org/legacy/
+        on:
+          all_branches: true
 
   # allow_failures:
-    # - env: DJANGO_VERSION='1.11'  DB=sqlite    SEARCH=whoosh   VARIANT=haystack
-    # - env: DJANGO_VERSION='1.11'  DB=sqlite    SEARCH=elastic  VARIANT=haystack
-
+  #   - env: DJANGO_VERSION='1.11'  DB=sqlite    SEARCH=whoosh   VARIANT=haystack
+  #   - env: DJANGO_VERSION='1.11'  DB=sqlite    SEARCH=elastic  VARIANT=haystack
 
 after_success:
-  - coveralls
-  - codecov
+  - ./scripts/coverage_reporter.sh $MODULE
+

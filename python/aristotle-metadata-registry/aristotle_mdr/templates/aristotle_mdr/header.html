@@ -149,9 +149,9 @@
                     <span class="no-notify" title="{% trans 'No unread notifications' %}"></span>
                     <span class="visible-xs-inline">{% trans 'No unread notifications' %}</span>
                     {% endif %}
-                    {% live_notify_badge classes="badge" %}
+                    {% live_notify_badge badge_class="badge" %}
                 </a>
-                {% live_notify_list classes="dropdown-menu" %}
+                {% live_notify_list list_class="dropdown-menu" %}
             </li>
             <li>
                 <a id="header_menu_button_logout" href="{% url 'logout' %}?next={{request.path}}" title="{% trans 'Log out'%}">

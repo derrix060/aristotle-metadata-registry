@@ -31,5 +31,4 @@ setup(
         'graphene-django>=2.0.0',
         'django-filter'
     ]
-
 )

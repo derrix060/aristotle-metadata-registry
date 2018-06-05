@@ -1,4 +1,4 @@
-GRAPHENE_DEBUG = True
+GRAPHENE_DEBUG = False
 
 GRAPHENE = {
     'SCHEMA': 'aristotle_mdr_graphql.schema.schema',

@@ -118,7 +118,7 @@ About the badges (plus some extras):
     :alt: Edit screen for a metadata object
     :scale: 100%
 
-.. |aristotle-logo| image:: https://raw.githubusercontent.com/aristotle-mdr/aristotle-metadata-registry/develop/aristotle_mdr/static/aristotle_mdr/images/aristotle.png
+.. |aristotle-logo| image:: https://raw.githubusercontent.com/aristotle-mdr/aristotle-metadata-registry/develop/python/aristotle-metadata-registry/aristotle_mdr/static/aristotle_mdr/images/aristotle.png
     :alt: Aristotle-MDR Logo
     :scale: 100%
     :target: http://www.aristotlemetadata.com
