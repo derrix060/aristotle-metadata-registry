@@ -10,6 +10,7 @@ python: 3.6
 install:
   - pip install tox codecov coveralls
 
+
 defaults:
   - &main_test_script
     before_script:
