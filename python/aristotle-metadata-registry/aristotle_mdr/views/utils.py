@@ -221,22 +221,6 @@ def generate_visibility_matrix(user):
     return matrix
 
 
-class ObjectLevelPermissionRequiredMixin(PermissionRequiredMixin):
-    def check_permissions(self, request):
-        """
-        Returns whether or not the user has permissions
-        """
-        perms = self.get_permission_required(request)
-        has_permission = False
-        if hasattr(self, 'object') and self.object is not None:
-            has_permission = request.user.has_perm(self.get_permission_required(request), self.object)
-        elif hasattr(self, 'get_object') and callable(self.get_object):
-            has_permission = request.user.has_perm(self.get_permission_required(request), self.get_object())
-        else:
-            has_permission = request.user.has_perm(self.get_permission_required(request))
-        return has_permission
-
-
 class GroupMemberMixin(object):
     user_pk_kwarg = "user_pk"
 
@@ -256,7 +240,7 @@ class GroupMemberMixin(object):
         return kwargs
 
 
-class RoleChangeView(GroupMemberMixin, LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, BaseDetailView, FormView):
+class RoleChangeView(GroupMemberMixin, LoginRequiredMixin, PermissionRequiredMixin, BaseDetailView, FormView):
     raise_exception = True
     redirect_unauthenticated_users = True
     object_level_permissions = True
@@ -280,7 +264,7 @@ class RoleChangeView(GroupMemberMixin, LoginRequiredMixin, ObjectLevelPermission
         return self.get_success_url()
 
 
-class MemberRemoveFromGroupView(GroupMemberMixin, LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, DetailView):
+class MemberRemoveFromGroupView(GroupMemberMixin, LoginRequiredMixin, PermissionRequiredMixin, DetailView):
     raise_exception = True
     redirect_unauthenticated_users = True
     object_level_permissions = True

@@ -8,10 +8,11 @@ from django.utils.translation import ugettext_lazy as _
 
 from django.http import Http404
 
+from braces.views import PermissionRequiredMixin
+
 from aristotle_mdr import models as MDR
 from aristotle_mdr import forms as MDRForms
 from aristotle_mdr import perms
-from aristotle_mdr.views.utils import ObjectLevelPermissionRequiredMixin
 
 from braces.views import LoginRequiredMixin
 from django.views.generic import DeleteView, TemplateView, FormView, UpdateView
@@ -28,7 +29,7 @@ class All(LoginRequiredMixin, TemplateView):
         return context
 
 
-class Workgroup(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, TemplateView):
+class Workgroup(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     # Show all discussions for a workgroups
     template_name = "aristotle_mdr/discussions/workgroup.html"
     permission_required = "aristotle_mdr.can_view_discussions_in_workgroup"
@@ -55,7 +56,7 @@ class Workgroup(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, Template
         return request.user.has_perm(self.get_permission_required(request), wg)
 
 
-class New(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, FormView):
+class New(LoginRequiredMixin, PermissionRequiredMixin, FormView):
     permission_required = "aristotle_mdr.can_post_discussion_in_workgroup"
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -112,7 +113,7 @@ class PostMixin(object):
         return get_object_or_404(MDR.DiscussionPost, pk=self.kwargs['pid'])
 
 
-class Post(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMixin, TemplateView):
+class Post(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, TemplateView):
     template_name = "aristotle_mdr/discussions/post.html"
     permission_required = "aristotle_mdr.can_view_discussion_post"
     raise_exception = True
@@ -136,7 +137,7 @@ class Post(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMixin, Te
         return render(request, self.template_name, context)
 
 
-class TogglePost(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMixin, TemplateView):
+class TogglePost(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, TemplateView):
     permission_required = "aristotle_mdr.user_can_alter_post"
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -149,7 +150,7 @@ class TogglePost(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMix
         return HttpResponseRedirect(reverse("aristotle:discussionsPost", args=[post.pk]))
 
 
-class NewComment(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMixin, FormView):
+class NewComment(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, FormView):
     permission_required = "aristotle_mdr.can_comment_on_post"
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -180,7 +181,7 @@ class NewComment(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMix
         return HttpResponseRedirect(reverse("aristotle:discussionsPost", args=[post.pk]))
 
 
-class DeletePost(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMixin, DeleteView):
+class DeletePost(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, DeleteView):
     model = MDR.DiscussionPost
     permission_required = "aristotle_mdr.can_delete_discussion_post"
     raise_exception = True
@@ -205,7 +206,7 @@ class DeletePost(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMix
         return self.post(request, *args, **kwargs)
 
 
-class EditPost(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, PostMixin, UpdateView):
+class EditPost(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, UpdateView):
     model = MDR.DiscussionPost
     fields = ['workgorup', 'title', 'relatedItems']
     permission_required = "aristotle_mdr.user_can_alter_post"
@@ -246,7 +247,7 @@ class CommentMixin(object):
         return comment
 
 
-class DeleteComment(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, CommentMixin, DeleteView):
+class DeleteComment(LoginRequiredMixin, PermissionRequiredMixin, CommentMixin, DeleteView):
     model = MDR.DiscussionComment
     permission_required = "aristotle_mdr.can_delete_comment"
     raise_exception = True
@@ -270,7 +271,7 @@ class DeleteComment(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, Comm
         return HttpResponseRedirect(reverse("aristotle:discussionsPost", args=[post.pk]))
 
 
-class EditComment(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, CommentMixin, UpdateView):
+class EditComment(LoginRequiredMixin, PermissionRequiredMixin, CommentMixin, UpdateView):
     model = MDR.DiscussionComment
     fields = ['body']
     permission_required = "aristotle_mdr.user_can_alter_comment"

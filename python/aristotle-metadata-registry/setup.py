@@ -46,7 +46,7 @@ setup(
 
         'django-model-utils>=2.3.1',
         'django-notifications-hq>=1.4',
-        'django-braces',
+        'django-braces>=1.12.0',
         'docutils',
 
         #Search requirements

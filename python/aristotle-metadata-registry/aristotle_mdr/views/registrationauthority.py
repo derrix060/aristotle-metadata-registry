@@ -9,7 +9,6 @@ from aristotle_mdr import models as MDR
 from aristotle_mdr import forms as MDRForms
 from aristotle_mdr.views.utils import (
     paginated_registration_authority_list,
-    ObjectLevelPermissionRequiredMixin,
     RoleChangeView,
     MemberRemoveFromGroupView
 )
@@ -58,7 +57,7 @@ class CreateRegistrationAuthority(LoginRequiredMixin, PermissionRequiredMixin, C
         return reverse('aristotle:registrationauthority_details', kwargs={'iid': self.object.id})
 
 
-class AddUser(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, UpdateView):
+class AddUser(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     # TODO: Replace UpdateView with DetailView, FormView
     # This is required for Django 1.8 only.
 
@@ -140,7 +139,7 @@ class MembersRegistrationAuthority(LoginRequiredMixin, PermissionRequiredMixin, 
     context_object_name = "item"
 
 
-class EditRegistrationAuthority(LoginRequiredMixin, ObjectLevelPermissionRequiredMixin, UpdateView):
+class EditRegistrationAuthority(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = MDR.RegistrationAuthority
     template_name = "aristotle_mdr/user/registration_authority/edit.html"
     permission_required = "aristotle_mdr.change_registrationauthority"

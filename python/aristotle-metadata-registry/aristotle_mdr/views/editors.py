@@ -7,6 +7,8 @@ from django.views.generic import (
 
 import reversion
 
+from braces.views import PermissionRequiredMixin
+
 from aristotle_mdr.utils import (
     concept_to_clone_dict, construct_change_message_extra_formsets,
     construct_change_message, url_slugify_concept, is_active_module
@@ -14,7 +16,6 @@ from aristotle_mdr.utils import (
 from aristotle_mdr import forms as MDRForms
 from aristotle_mdr import models as MDR
 
-from aristotle_mdr.views.utils import ObjectLevelPermissionRequiredMixin
 from aristotle_mdr.contrib.identifiers.models import ScopedIdentifier
 from aristotle_mdr.contrib.slots.models import Slot
 from aristotle_mdr.contrib.slots.utils import get_allowed_slots
@@ -34,7 +35,7 @@ logger = logging.getLogger(__name__)
 logger.debug("Logging started for " + __name__)
 
 
-class ConceptEditFormView(ObjectLevelPermissionRequiredMixin):
+class ConceptEditFormView(PermissionRequiredMixin):
     raise_exception = True
     redirect_unauthenticated_users = True
     object_level_permissions = True

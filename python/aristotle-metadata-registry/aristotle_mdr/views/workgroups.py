@@ -16,7 +16,6 @@ from aristotle_mdr.views.utils import (
     paginate_sort_opts,
     paginated_workgroup_list,
     workgroup_item_statuses,
-    ObjectLevelPermissionRequiredMixin,
     RoleChangeView,
     MemberRemoveFromGroupView
 )
@@ -47,7 +46,7 @@ class WorkgroupContextMixin(object):
         return context
 
 
-class WorkgroupView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermissionRequiredMixin, DetailView):
+class WorkgroupView(LoginRequiredMixin, WorkgroupContextMixin, PermissionRequiredMixin, DetailView):
     permission_required = "aristotle_mdr.view_workgroup"
 
     def get(self, request, *args, **kwargs):
@@ -71,7 +70,7 @@ class WorkgroupView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermis
         return self.object and [self.object.template] or []
 
 
-class ItemsView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermissionRequiredMixin, ListView):
+class ItemsView(LoginRequiredMixin, WorkgroupContextMixin, PermissionRequiredMixin, ListView):
     template_name = "aristotle_mdr/workgroupItems.html"
     sort_by = None
     permission_required = "aristotle_mdr.view_workgroup"
@@ -102,12 +101,12 @@ class ItemsView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermission
             *paginate_sort_opts.get(self.sort_by))
 
 
-class MembersView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermissionRequiredMixin, DetailView):
+class MembersView(LoginRequiredMixin, WorkgroupContextMixin, PermissionRequiredMixin, DetailView):
     template_name = 'aristotle_mdr/user/workgroups/members.html'
     permission_required = "aristotle_mdr.view_workgroup"
 
 
-class ArchiveView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermissionRequiredMixin, DetailView):
+class ArchiveView(LoginRequiredMixin, WorkgroupContextMixin, PermissionRequiredMixin, DetailView):
     template_name = 'aristotle_mdr/actions/archive_workgroup.html'
     permission_required = "aristotle_mdr.can_archive_workgroup"
 
@@ -118,7 +117,7 @@ class ArchiveView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermissi
         return HttpResponseRedirect(self.workgroup.get_absolute_url())
 
 
-class AddMembersView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermissionRequiredMixin, UpdateView):
+class AddMembersView(LoginRequiredMixin, WorkgroupContextMixin, PermissionRequiredMixin, UpdateView):
     # TODO: Replace UpdateView with DetailView, FormView
     # This is required for Django 1.8 only.
 
@@ -153,7 +152,7 @@ class AddMembersView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermi
         return reverse("aristotle:workgroupMembers", args=[self.get_object().pk])
 
 
-class LeaveView(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermissionRequiredMixin, DetailView):
+class LeaveView(LoginRequiredMixin, WorkgroupContextMixin, PermissionRequiredMixin, DetailView):
     template_name = 'aristotle_mdr/actions/workgroup_leave.html'
     permission_required = "aristotle_mdr.can_leave_workgroup"
 
@@ -189,7 +188,7 @@ class ListWorkgroup(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         return paginated_workgroup_list(request, workgroups, self.template_name, context)
 
 
-class EditWorkgroup(LoginRequiredMixin, WorkgroupContextMixin, ObjectLevelPermissionRequiredMixin, UpdateView):
+class EditWorkgroup(LoginRequiredMixin, WorkgroupContextMixin, PermissionRequiredMixin, UpdateView):
     template_name = "aristotle_mdr/user/workgroups/edit.html"
     permission_required = "aristotle_mdr.change_workgroup"
 
