@@ -54,5 +54,5 @@ in or tracked for changes.
   
 
 Note: We encourage the use of `docker-compose exec web` over `docker run` as we anticipate
-adding extra services (workers, advnaced caches, etc...) around Aristotle that will make 
+adding extra services (workers, advanced caches, etc...) around Aristotle that will make 
 docker-compose easier for testing around.
