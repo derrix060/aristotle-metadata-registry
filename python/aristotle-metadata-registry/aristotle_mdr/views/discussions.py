@@ -57,6 +57,7 @@ class Workgroup(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
 
 
 class New(LoginRequiredMixin, PermissionRequiredMixin, FormView):
+    object_level_permissions = True
     permission_required = "aristotle_mdr.can_post_discussion_in_workgroup"
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -114,6 +115,7 @@ class PostMixin(object):
 
 
 class Post(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, TemplateView):
+    object_level_permissions = True
     template_name = "aristotle_mdr/discussions/post.html"
     permission_required = "aristotle_mdr.can_view_discussion_post"
     raise_exception = True
@@ -138,6 +140,7 @@ class Post(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, TemplateView)
 
 
 class TogglePost(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, TemplateView):
+    object_level_permissions = True
     permission_required = "aristotle_mdr.user_can_alter_post"
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -151,6 +154,7 @@ class TogglePost(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, Templat
 
 
 class NewComment(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, FormView):
+    object_level_permissions = True
     permission_required = "aristotle_mdr.can_comment_on_post"
     raise_exception = True
     redirect_unauthenticated_users = True
@@ -182,6 +186,7 @@ class NewComment(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, FormVie
 
 
 class DeletePost(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, DeleteView):
+    object_level_permissions = True
     model = MDR.DiscussionPost
     permission_required = "aristotle_mdr.can_delete_discussion_post"
     raise_exception = True
@@ -207,6 +212,7 @@ class DeletePost(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, DeleteV
 
 
 class EditPost(LoginRequiredMixin, PermissionRequiredMixin, PostMixin, UpdateView):
+    object_level_permissions = True
     model = MDR.DiscussionPost
     fields = ['workgorup', 'title', 'relatedItems']
     permission_required = "aristotle_mdr.user_can_alter_post"
@@ -248,6 +254,7 @@ class CommentMixin(object):
 
 
 class DeleteComment(LoginRequiredMixin, PermissionRequiredMixin, CommentMixin, DeleteView):
+    object_level_permissions = True
     model = MDR.DiscussionComment
     permission_required = "aristotle_mdr.can_delete_comment"
     raise_exception = True
@@ -272,6 +279,7 @@ class DeleteComment(LoginRequiredMixin, PermissionRequiredMixin, CommentMixin, D
 
 
 class EditComment(LoginRequiredMixin, PermissionRequiredMixin, CommentMixin, UpdateView):
+    object_level_permissions = True
     model = MDR.DiscussionComment
     fields = ['body']
     permission_required = "aristotle_mdr.user_can_alter_comment"
