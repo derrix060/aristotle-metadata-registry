@@ -60,7 +60,7 @@ class CreateRegistrationAuthority(LoginRequiredMixin, PermissionRequiredMixin, C
 class AddUser(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     # TODO: Replace UpdateView with DetailView, FormView
     # This is required for Django 1.8 only.
-
+    object_level_permissions = True
     template_name = "aristotle_mdr/user/registration_authority/add_user.html"
     permission_required = "aristotle_mdr.change_registrationauthority_memberships"
     raise_exception = True
@@ -140,6 +140,7 @@ class MembersRegistrationAuthority(LoginRequiredMixin, PermissionRequiredMixin, 
 
 
 class EditRegistrationAuthority(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    object_level_permissions = True
     model = MDR.RegistrationAuthority
     template_name = "aristotle_mdr/user/registration_authority/edit.html"
     permission_required = "aristotle_mdr.change_registrationauthority"
