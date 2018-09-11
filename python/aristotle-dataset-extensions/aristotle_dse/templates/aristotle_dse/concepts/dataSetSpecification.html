@@ -135,7 +135,7 @@
             {% endif %}
             {% for deinc in item.dssdeinclusion_set.all %}
                 <tr>
-                    <td>{{ deinc.order }}<i class="fa fa-fw fa-"></i>{% include "aristotle_mdr/helpers/itemLink.html" with item=deinc.data_element %}
+                    <td>{{ deinc.order|default_if_none:" " }}<i class="fa fa-fw fa-"></i>{% include "aristotle_mdr/helpers/itemLink.html" with item=deinc.data_element %}
                         {% if deinc.specific_information %}
                         <div>
                             <strong>Specific Information:</strong>

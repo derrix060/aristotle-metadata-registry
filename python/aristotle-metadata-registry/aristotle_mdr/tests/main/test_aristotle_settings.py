@@ -18,16 +18,9 @@ class TestAristotleSettings(TestCase):
     def test_bad_bulk_action_settings_log_correctly(self, mock_logger):
         with override_settings(
             ARISTOTLE_SETTINGS=dict(settings.ARISTOTLE_SETTINGS, BULK_ACTIONS={}),
-            ARISTOTLE_SETTINGS_STRICT_MODE=False
-        ):
-            my_settings = fetch_aristotle_settings()
-            mock_logger.error.assert_called_with(error_messages['bulk_action_failed'])
-
-        with override_settings(
-            ARISTOTLE_SETTINGS=dict(settings.ARISTOTLE_SETTINGS, BULK_ACTIONS={}),
             ARISTOTLE_SETTINGS_STRICT_MODE=True
         ):
-            with self.assertRaises(ImproperlyConfigured):
+            with self.assertRaisesRegexp(ImproperlyConfigured, error_messages['bulk_action_failed']):
                 my_settings = fetch_aristotle_settings()
 
 
@@ -35,32 +28,18 @@ class TestAristotleSettings(TestCase):
     def test_content_extensions_settings_log_correctly(self, mock_logger):
         with override_settings(
             ARISTOTLE_SETTINGS=dict(settings.ARISTOTLE_SETTINGS, CONTENT_EXTENSIONS=[1]),
-            ARISTOTLE_SETTINGS_STRICT_MODE=False
-        ):
-            my_settings = fetch_aristotle_settings()
-            mock_logger.error.assert_called_with(error_messages['content_extensions_failed'])
-
-        with override_settings(
-            ARISTOTLE_SETTINGS=dict(settings.ARISTOTLE_SETTINGS, CONTENT_EXTENSIONS=[1]),
             ARISTOTLE_SETTINGS_STRICT_MODE=True
         ):
-            with self.assertRaises(ImproperlyConfigured):
+            with self.assertRaisesRegexp(ImproperlyConfigured, error_messages['content_extensions_failed']):
                 my_settings = fetch_aristotle_settings()
 
     @patch('aristotle_mdr.utils.utils.logger')
     def test_downloader_settings_log_correctly(self, mock_logger):
         with override_settings(
             ARISTOTLE_SETTINGS=dict(settings.ARISTOTLE_SETTINGS, DOWNLOADERS=[1]),
-            ARISTOTLE_SETTINGS_STRICT_MODE=False
-        ):
-            my_settings = fetch_aristotle_settings()
-            mock_logger.error.assert_called_with(error_messages['downloaders_failed'])
-
-        with override_settings(
-            ARISTOTLE_SETTINGS=dict(settings.ARISTOTLE_SETTINGS, DOWNLOADERS=[1]),
             ARISTOTLE_SETTINGS_STRICT_MODE=True
         ):
-            with self.assertRaises(ImproperlyConfigured):
+            with self.assertRaisesRegexp(ImproperlyConfigured, error_messages['downloaders_failed']):
                 my_settings = fetch_aristotle_settings()
 
     @patch('aristotle_mdr.utils.utils.logger')

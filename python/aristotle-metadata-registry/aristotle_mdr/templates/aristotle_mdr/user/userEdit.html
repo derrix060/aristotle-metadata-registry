@@ -1,4 +1,5 @@
-{% extends "aristotle_mdr/user/userHome.html" %}
+{% extends "aristotle_mdr/user/base.html" %}
+{% load bootstrap3 static %}
 
 {% block title %}Edit details{% endblock %}
 {% block collapse-link%}<i class="fa fa-user fa-fw"></i> Edit my account details</a>{% endblock %}
@@ -6,20 +7,27 @@
     {% include "aristotle_mdr/user/userSideBar.html" with activeTab='edit' %}
 {% endblock %}
 
-{% block page %}
-    <h1>Edit my account details</h1>
-    {{ form.errors }}
-    <form method="post">{% csrf_token %}
-    {% if saved %}
-    <div class="message info">
-    </div>
-    {% endif %}
-    {{ form.as_p }}
+{% block extra_head_scripts %}
+{{ block.super }}
+<script src="{% static 'constrainedfilefield/js/file_checker.js' %}"></script>
+{% endblock %}
 
-    <div class="modal-footer">
-        <a class="btn btn-default" href="{% url 'aristotle:userHome' %}"><i class="fa fa-times fa-fw"></i>Cancel</a>
-        <button type="submit" class="btn btn-primary" value="Save changes"><i class="fa fa-check  fa-fw"></i> Save changes</button>
+{% block outerpage %}
+    <div class="col-md-6">
+      <h1>Edit my account details</h1>
+      <form enctype="multipart/form-data" method="post">{% csrf_token %}
+        {% bootstrap_form form %}
+
+        {% buttons %}
+          <a class="btn btn-default" href="{% url 'aristotle:userHome' %}">
+            <i class="fa fa-times fa-fw"></i>Cancel
+          </a>
+          <button type="submit" class="btn btn-primary">
+              <i class="fa fa-check  fa-fw"></i>Save Changes
+          </button>
+        {% endbuttons %}
     </div>
-</form>
+
+    </form>
 
 {% endblock %}

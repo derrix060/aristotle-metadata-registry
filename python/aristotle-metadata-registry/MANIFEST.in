@@ -4,6 +4,7 @@ recursive-include aristotle_mdr/contrib *
 recursive-include aristotle_mdr/locale *
 recursive-include aristotle_mdr/static *
 recursive-include aristotle_mdr/templates *
+recursive-include aristotle_mdr/vendor *
 recursive-exclude aristotle_mdr/ *.pyc
 exclude MANIFEST.in
 exclude aristotle_mdr/contrib/help/static/aristotle_mdr

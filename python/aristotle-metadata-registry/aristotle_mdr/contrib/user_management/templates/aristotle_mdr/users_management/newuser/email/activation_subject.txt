@@ -1,1 +1,1 @@
-{% spaceless %}You been activated!{% endspaceless %}
+{% spaceless %}{{ config.SITE_NAME|default:"Aristotle Metadata Registry" }} Activation{% endspaceless %}

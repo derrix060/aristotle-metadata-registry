@@ -12,4 +12,9 @@ urlpatterns = [
         views.UserAutocomplete.as_view(),
         name='user',
     ),
+    url(
+        r'^workgroup',
+        views.WorkgroupAutocomplete.as_view(),
+        name='workgroup',
+    ),
 ]

@@ -37,15 +37,6 @@ class AristotleSignalProcessor(signals.BaseSignalProcessor):
         instance = concept.item
         self.handle_save(instance.__class__, instance)
 
-    # Keeping this just in case, but its unlikely to be used again as django-reversion
-    # has remove the post_revision_commit signals.
-    # Safe to delete after 2017-07-01
-    # def handle_concept_revision(self, instances, **kwargs):
-    #     from aristotle_mdr.models import _concept
-    #     for instance in instances:
-    #         if isinstance(instance, _concept) and type(instance) is not _concept:
-    #             self.handle_save(instance.__class__, instance)
-
     def handle_concept_save(self, sender, instance, **kwargs):
         from aristotle_mdr.models import _concept, aristotleComponent
         if isinstance(instance, _concept) and type(instance) is not _concept:

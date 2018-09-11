@@ -1,12 +1,13 @@
 {% extends "aristotle_mdr/user/userHome.html" %}
 {% load i18n %}
+{% load bootstrap3 %}
 
 {% block collapse-link %}
     <i class="fa fa-users fa-fw"></i> All Registration Authorities </a>
 {% endblock %}
 
 {% block sidebar %}
-    {% include "aristotle_mdr/user/userSideBar.html" with activeTab='adminTools' %}
+    {% include "aristotle_mdr/user/userSideBar.html" with activeTab='registrarTools' %}
 {% endblock %}
 
 {% block page %}
@@ -15,9 +16,7 @@
 
 <form action="" method="POST">
 {% csrf_token %}
-<table class="table">
-{{ form.as_table }}
-</table>
+{% include 'aristotle_mdr/helpers/fancy_table_form.html' with form=form alert_fields=alert_fields %}
 <a class="btn btn-danger" href="{% url 'aristotle:registrationauthority_details' item.id %}">Cancel</a>
 <button class="btn btn-primary" type="submit">Save changes</button>
 </form>

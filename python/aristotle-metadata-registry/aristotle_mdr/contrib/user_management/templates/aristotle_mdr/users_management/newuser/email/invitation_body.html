@@ -1,7 +1,7 @@
-You've been invited to join the {{ config.SITE_NAME }} Metadata Registry.
+You've been invited to join the {{ config.SITE_NAME|default:'Aristotle' }} Metadata Registry.
 
 Follow this link to create your account.
 
- {{request.scheme}}://{{ request.META.HTTP_HOST }}{% url "aristotle-user:registry_invitations_register" user_id token %}
+ {{request.scheme}}://{{ request.META.HTTP_HOST }}{% url accept_url_name user_id token %}
 
 If you are unsure about this link please contact the sender.

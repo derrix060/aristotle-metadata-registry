@@ -5,6 +5,8 @@ from django.contrib.admin.filters import RelatedFieldListFilter
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.db.models import BooleanField
+from django.forms import widgets
 
 import aristotle_mdr.models as MDR
 import aristotle_mdr.forms as MDRForms
@@ -258,7 +260,7 @@ class RegistrationAuthorityAdmin(admin.ModelAdmin):
     filter_horizontal = ['managers', 'registrars']
 
     fieldsets = [
-        (None, {'fields': ['name', 'definition']}),
+        (None, {'fields': ['name', 'definition', 'active']}),
         ('Members', {'fields': ['managers', 'registrars']}),
         ('Visibility and control', {'fields': ['locked_state', 'public_state']}),
         ('Status descriptions',

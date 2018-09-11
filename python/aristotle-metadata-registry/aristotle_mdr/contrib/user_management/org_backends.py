@@ -8,7 +8,9 @@ from django.shortcuts import redirect, render
 from django.views.generic import FormView
 from django.template import loader
 
-from organizations.backends.defaults import InvitationBackend
+from organizations.backends.defaults import (InvitationBackend,
+                                             RegistrationBackend)
+
 from organizations.backends.tokens import RegistrationTokenGenerator
 
 from . import forms
@@ -20,18 +22,21 @@ from django.utils.translation import ugettext_lazy as _
 
 from django.http import Http404
 
+from aristotle_mdr.utils.utils import fetch_aristotle_settings
+
 import logging
 logger = logging.getLogger(__name__)
 logger.debug("Logging started for " + __name__)
 
 
-class AristotleInvitationBackend(InvitationBackend):
+class BaseAristotleInvitationBackend(InvitationBackend):
     """
     A backend for allowing new users to join the site by creating a new user
     associated with a new organization.
     """
 
-    form_class = forms.AristotleUserRegistrationForm
+    form_class = forms.UserRegistrationForm
+    accept_url_name = 'registry_invitations_register'
 
     def get_success_url(self):
         return reverse('friendly_login') + '?welcome=true'
@@ -39,7 +44,7 @@ class AristotleInvitationBackend(InvitationBackend):
     def get_urls(self):
         return [
             url(r'^accept/(?P<user_id>[\d]+)-(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
-                view=self.activate_view, name="registry_invitations_register"),
+                view=self.activate_view, name=self.accept_url_name),
             url(r'^$', view=self.invite_view(), name="registry_invitations_create"),
         ]
 
@@ -85,9 +90,9 @@ class AristotleInvitationBackend(InvitationBackend):
             except User.DoesNotExist:
                 # TODO break out user creation process
                 user = User.objects.create(
-                    email=email,
-                    password=get_user_model().objects.make_random_password()
+                    email=email
                 )
+                user.set_password(User.objects.make_random_password())
                 user.is_active = False
                 user.save()
             self.send_invitation(user, sender, request=request, **kwargs)
@@ -113,7 +118,12 @@ class AristotleInvitationBackend(InvitationBackend):
             reply_to = from_email
 
         headers = {'Reply-To': reply_to}
-        kwargs.update({'sender': sender, 'user': user})
+        kwargs.update({
+            'sender': sender,
+            'user': user,
+            'accept_url_name': 'aristotle-user:' + self.accept_url_name,
+            'request': request
+        })
 
         subject_template = loader.get_template(subject_template)
         body_template = loader.get_template(body_template)
@@ -129,14 +139,18 @@ class AristotleInvitationBackend(InvitationBackend):
         if user.is_active:
             return False
         token = self.get_token(user)
-        kwargs.update({'token': token})
-        kwargs.update({'sender': sender})
-        kwargs.update({'user_id': user.pk})
+        aristotle_settings = fetch_aristotle_settings()
+        kwargs.update({
+            'token': token,
+            'sender': sender,
+            'user_id': user.pk,
+            'config': aristotle_settings,
+        })
         self.email_message(user, self.invitation_subject, self.invitation_body, **kwargs).send()
         return True
 
 
-class NewUserInvitationBackend(AristotleInvitationBackend):
+class AristotleInvitationBackend(BaseAristotleInvitationBackend):
 
     notification_subject = 'aristotle_mdr/users_management/newuser/email/notification_subject.txt'
     notification_body = 'aristotle_mdr/users_management/newuser/email/notification_body.html'

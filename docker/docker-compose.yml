@@ -1,6 +1,10 @@
 version: '3'
 
 services:
+  db:
+    image: postgres
+    volumes:
+      - ./data/db/:/var/lib/postgresql/data
   web:
     build:
       context: ..
@@ -8,6 +12,7 @@ services:
     image: aristotle_metadata_registry:dev
     command: sh ./sh/entrypoint/web.sh
     environment:
+      - DATABASE_URL=postgresql://postgres:@db:5432/postgres
       - DJANGO_SETTINGS_MODULE=settings
       - PYTHONPATH=.
     ports:
@@ -15,3 +20,5 @@ services:
     volumes:
         - ../:/usr/src/app
         - ./data:/data
+    depends_on:
+      - db

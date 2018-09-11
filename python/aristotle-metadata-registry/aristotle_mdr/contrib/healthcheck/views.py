@@ -9,7 +9,6 @@ def heartbeat(request):
         "webserver": check_web(),
         "database": check_db(),
         "cache": check_cache(),
-        # "channels":check_channels()
     }
     if any(True for v in service_status.values() if 'error' in v.keys()):
         status_code = 500

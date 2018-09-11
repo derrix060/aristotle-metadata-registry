@@ -6,14 +6,20 @@
 {% endblock %}
 
 {% block sidebar %}
-    {% include "aristotle_mdr/user/userSideBar.html" with activeTab='adminTools' %}
+{% include "aristotle_mdr/user/userSideBar.html" with activeTab=activeTab|default:'adminTools' %}
 {% endblock %}
 
 {% block page %}
-<h1>{% block title %}All Registration Authorities{% endblock %}</h1>
+<h1>
+  {% block title %}
+    {{ title_text|default:"All Registration Authorities" }}
+  {% endblock %}
+</h1>
 
     <section id="workgroups">
+        {% if not hide_add_button %}
         <a class="btn btn-default" href="{% url 'aristotle:registrationauthority_create'%}">Add New Registration Authority</a>
+        {% endif %}
         
         {% include "aristotle_mdr/helpers/paginated_registration_authority_list.html" with page=page show_all=True manage=True %}
 </section>

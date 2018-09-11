@@ -2,7 +2,7 @@
 
 TOX_ENV_TO_RUN=$1
 
-if ./scripts/check_path.sh $MODULE_PATH || ./scripts/check_path.sh python/aristotle-metadata-registry; then
+if [ "$TRAVIS_BRANCH" = "master" ] || ./scripts/check_path.sh $MODULE_PATH || ./scripts/check_path.sh python/aristotle-metadata-registry; then
   tox -e $TOX_ENV_TO_RUN --skip-missing-interpreters
   export OUT_CODE=$?
 fi;

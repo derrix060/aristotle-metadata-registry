@@ -101,19 +101,15 @@ About the badges (plus some extras):
    :target: https://github.com/data61/wcag-zoo/wiki/Compliance-Statement
    :alt: This repository is WCAG-Zoo compliant
 
-.. |homescreenshot| image:: https://user-images.githubusercontent.com/2173174/28704337-3a65dbca-73ad-11e7-9d01-fce46591118a.png
+.. |homescreenshot| image:: ./docs/_static/homescreenshot.png
     :alt:  Main screen of the Aristotle registry
     :scale: 100%
 
-.. |newitemsample| image:: https://user-images.githubusercontent.com/2173174/28704337-3a65dbca-73ad-11e7-9d01-fce46591118a.png
-    :alt:  Data Element on desktop and mobile
-    :scale: 100%
-
-.. |itemeditsample| image:: https://user-images.githubusercontent.com/2173174/28704593-be870022-73ae-11e7-8ff8-5c328fe28281.png
+.. |itemeditsample| image:: ./docs/_static/itemeditsample.png
     :alt: Edit screen for a metadata object
     :scale: 100%
 
-.. |aristotle-logo| image:: https://raw.githubusercontent.com/aristotle-mdr/aristotle-metadata-registry/develop/python/aristotle-metadata-registry/aristotle_mdr/static/aristotle_mdr/images/aristotle.png
+.. |aristotle-logo| image:: ./python/aristotle-metadata-registry/aristotle_mdr/static/aristotle_mdr/images/aristotle.png
     :alt: Aristotle-MDR Logo
     :scale: 100%
     :target: http://www.aristotlemetadata.com

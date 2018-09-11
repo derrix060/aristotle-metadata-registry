@@ -3,6 +3,9 @@
     <div>
         <a href="{% url 'aristotle:accessibility' %}">Accessibility</a>
         <a href="{% url 'aristotle_help:help_base' %}">Help</a>
+        
+        {% block extra_footer %}
+        {% endblock %}
     </div>
     {# Removing or altering the following line may breach your licence #}
     {# If you extend this file make sure the following link is retained in your footer #}

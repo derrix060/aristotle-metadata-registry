@@ -29,7 +29,7 @@
             <dt>Identifiers</dt>
             <dd>UUID - <span title='{{ item.uuid }}'>{{ item.uuid }}</span></dd>
             {% for ident in item.identifiers.all %}
-                <dd><a href="{{ident.namespace.naming_authority.get_absolute_url}}">{{ ident.prefix }}</a>:{{ ident.identifier }}:{{ ident.version }}</dd>
+                <dd><a href="{{ident.namespace.naming_authority.get_absolute_url}}">{{ ident.prefix }}</a>/{{ ident.identifier }}/{{ ident.version }}</dd>
             {% endfor %}
             {% if item.version %}
             <dt class="visible-xs">{% trans 'Version'%}</dt><dd class="visible-xs">{{ item.version }}</dd>

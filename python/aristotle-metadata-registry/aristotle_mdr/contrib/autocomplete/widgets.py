@@ -64,3 +64,16 @@ class UserAutocompleteSelect(UserAutocompleteMixin, ModelSelect2):
 
 class UserAutocompleteSelectMultiple(UserAutocompleteMixin, ModelSelect2Multiple):
     url = 'aristotle-autocomplete:user'
+
+
+class WorkgroupAutocompleteMixin(object):
+    def __init__(self, *args, **kwargs):
+        kwargs.update(
+            url=reverse_lazy(self.url),
+            attrs={'data-html': 'true'}
+        )
+        super().__init__(*args, **kwargs)
+
+
+class WorkgroupAutocompleteSelect(WorkgroupAutocompleteMixin, ModelSelect2):
+    url = 'aristotle-autocomplete:workgroup'

@@ -24,7 +24,7 @@ class Namespace(TimeStampedModel):
         return u"{0}:{1}".format(self.naming_authority.name, self.shorthand_prefix)
 
 
-class ScopedIdentifier(TimeStampedModel):
+class ScopedIdentifier(TimeStampedModel, MDR.aristotleComponent):
     namespace = models.ForeignKey(Namespace)
     concept = ConceptForeignKey(MDR._concept, related_name='identifiers')
     identifier = models.CharField(  # 7.2.2.2.2.1
@@ -49,3 +49,7 @@ class ScopedIdentifier(TimeStampedModel):
     @property
     def prefix(self):
         return self.namespace.shorthand_prefix
+
+    @property
+    def parentItem(self):
+        return self.concept

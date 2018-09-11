@@ -96,6 +96,27 @@ class LoggedInViewConceptPages(utils.LoggedInViewPages, utils.FormsetTestUtils):
             **self.defaults
         )
 
+    # ---- utils ----
+
+    def make_review_request(self, item, user):
+
+        self.assertFalse(perms.user_can_view(user,item))
+        self.item1.save()
+        self.item1 = self.itemType.objects.get(pk=item.pk)
+
+        review = models.ReviewRequest.objects.create(
+            requester=self.su,registration_authority=self.ra,
+            state=self.ra.public_state,
+            registration_date=datetime.date(2010,1,1)
+        )
+
+        review.concepts.add(item)
+
+        self.assertTrue(perms.user_can_view(user,item))
+        self.assertTrue(perms.user_can_change_status(user,item))
+
+    # ---- tests ----
+
     def test_su_can_view(self):
         self.login_superuser()
         response = self.client.get(self.get_page(self.item1))
@@ -319,8 +340,8 @@ class LoggedInViewConceptPages(utils.LoggedInViewPages, utils.FormsetTestUtils):
         self.assertEqual(self.item1.identifiers.count(),2)
 
         response = self.client.get(reverse('aristotle:item',args=[self.item1.id]), follow=True)
-        self.assertContains(response, 'pre</a>:YE:1')
-        self.assertContains(response, 'pre</a>:RE:1')
+        self.assertContains(response, 'pre</a>/YE/1')
+        self.assertContains(response, 'pre</a>/RE/1')
 
         idents = self.item1.identifiers.all()
         self.assertEqual(idents[0].identifier, 'YE')
@@ -905,20 +926,7 @@ class LoggedInViewConceptPages(utils.LoggedInViewPages, utils.FormsetTestUtils):
     def test_registrar_can_change_status(self):
         self.login_registrar()
 
-        self.assertFalse(perms.user_can_view(self.registrar,self.item1))
-        self.item1.save()
-        self.item1 = self.itemType.objects.get(pk=self.item1.pk)
-
-        review = models.ReviewRequest.objects.create(
-            requester=self.su,registration_authority=self.ra,
-            state=self.ra.public_state,
-            registration_date=datetime.date(2010,1,1)
-        )
-
-        review.concepts.add(self.item1)
-
-        self.assertTrue(perms.user_can_view(self.registrar,self.item1))
-        self.assertTrue(perms.user_can_change_status(self.registrar,self.item1))
+        self.make_review_request(self.item1, self.registrar)
 
         response = self.client.get(reverse('aristotle:changeStatus',args=[self.item1.id]))
         self.assertEqual(response.status_code,200)
@@ -942,26 +950,42 @@ class LoggedInViewConceptPages(utils.LoggedInViewPages, utils.FormsetTestUtils):
         self.assertTrue(self.item1.is_registered)
         self.assertTrue(self.item1.is_public())
 
+    @tag('inactive_ra', 'changestatus')
+    def test_registrar_cant_change_status_with_inactive_ra(self):
+
+        self.login_registrar()
+        self.make_review_request(self.item1, self.registrar)
+
+        # Deactivate RA
+        self.ra.active = 1
+        self.ra.save()
+
+        response = self.client.get(reverse('aristotle:changeStatus',args=[self.item1.id]))
+        self.assertEqual(response.status_code,200)
+        self.assertFalse(self.ra in response.context['form'].fields['registrationAuthorities'].queryset)
+
+        response = self.client.post(
+            reverse('aristotle:changeStatus',args=[self.item1.id]),
+            {
+                'change_status-registrationAuthorities': [str(self.ra.id)],
+                'change_status-state': self.ra.public_state,
+                'change_status-changeDetails': "testing",
+                'change_status-cascadeRegistration': 0, # no
+                'submit_skip': 'value',
+                'change_status_view-current_step': 'change_status',
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('registrationAuthorities' in response.context['form'].errors)
+
+
     @tag('changestatus')
     def test_registrar_can_change_status_with_cascade(self):
         if not hasattr(self,"run_cascade_tests"):
             return
         self.login_registrar()
 
-        self.assertFalse(perms.user_can_view(self.registrar,self.item1))
-        self.item1.save()
-        self.item1 = self.itemType.objects.get(pk=self.item1.pk)
-
-        review = models.ReviewRequest.objects.create(
-            requester=self.su,registration_authority=self.ra,
-            state=self.ra.public_state,
-            registration_date=datetime.date(2010,1,1)
-        )
-
-        review.concepts.add(self.item1)
-
-        self.assertTrue(perms.user_can_view(self.registrar,self.item1))
-        self.assertTrue(perms.user_can_change_status(self.registrar,self.item1))
+        self.make_review_request(self.item1, self.registrar)
 
         response = self.client.get(reverse('aristotle:changeStatus',args=[self.item1.id]))
         self.assertEqual(response.status_code,200)

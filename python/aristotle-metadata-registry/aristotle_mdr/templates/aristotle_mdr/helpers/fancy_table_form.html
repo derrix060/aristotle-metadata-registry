@@ -1,0 +1,33 @@
+{% if form.non_form_errors %}
+    <ul class="alert alert-danger">
+        {% for error in form.non_form_errors %}
+          <li>{{ error }}<li>
+        {% endfor %}
+    </ul>
+{% endif %}
+<table class="table">
+{% for field in form %}
+<tr>
+  <td>
+    {{ field.label_tag }}
+  </td>
+  <td {% if field.errors %}colspan=2{% endif %}>
+    {% if field.errors %}
+        <ul class="alert alert-danger">
+            {% for error in field.errors %}
+              <li>{{ error }}<li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {{ field }}
+    {% if field.help_text %}
+      {% if alert_fields and field.name in alert_fields %}
+        <br><div class="alert alert-warning margin-above" role="alert">{{ field.help_text }}</div>
+      {% else %}
+        <br><span>{{ field.help_text }}</span>
+      {% endif %}
+    {% endif %}
+  </td>
+</tr>
+{% endfor %}
+</table>

@@ -2,9 +2,12 @@
 {% load bootstrap3 %}
 {% load static from staticfiles %}
 {% load notifications_tags %}
+{% load aristotle_tags %}
 <a class="sr-only" accesskey="j" href="#content">Skip to content</a>
 <a class="sr-only" accesskey="l" href="{% url 'aristotle:accessibility' %}#accesskeys">Learn about the access keys available for {{ config.SITE_NAME }}</a>
+{% block header_navtag %}
 <nav class="main navbar navbar-inverse">
+{% endblock %}
 <div class="container-fluid" role="navigation">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
@@ -14,7 +17,9 @@
         <span class="icon-bar"></span>
       </button>
       <a href="{% url 'aristotle:home' %}" id="logo">
+        {% block header_logo %}
         <img height="50px" src="{% static config.SITE_BRAND %}" alt="{{ config.SITE_NAME }}" title="{{ config.SITE_NAME }}">
+        {% endblock %}
       </a>
     </div>
 
@@ -39,6 +44,9 @@
             </form>
         {% endif %}
 
+        {% block extra_header %}
+        {% endblock %}
+
         <ul class="nav navbar-nav navbar-right">
             <li >
                 <a href="{% url 'browse_apps' %}">{% trans 'Browse'%}</a>
@@ -62,12 +70,12 @@
                     </a></li>
                     <li><a href="{% url 'aristotle:userFavourites' %}">
                         <i class="fa fa-bookmark fa-fw"></i> {% trans 'My Favourites'%}
-                        <span class="badge pull-right">{{ user.profile.favourites.count }}</span>
+                        <span class="badge">{{ user.profile.favourites.count }}</span>
                     </a></li>
                     <li><a href="{% url 'aristotle:userInbox' %}">
                         <i class="fa fa-envelope fa-fw"></i> {% trans 'Notifications'%}
                         {% with notecount=user.notifications.unread.count %}
-                        <span class="badge pull-right" title="{{ notecount }} unread notifications">{{ notecount }}</span>
+                        <span class="badge" title="{{ notecount }} unread notifications">{{ notecount }}</span>
                         {% endwith %}
                     </a></li>
                     <li><a href="{% url 'aristotle:discussions' %}">
@@ -154,17 +162,30 @@
                 {% live_notify_list list_class="dropdown-menu notify-menu" %}
             </li>
             <li>
-                <a id="header_menu_button_logout" href="{% url 'logout' %}?next={{request.path}}" title="{% trans 'Log out'%}">
+                {% url 'aristotle_mdr:home' as home_url %}
+                {% url 'aristotle_mdr:userHome' as user_home_url %}
+                {% ifeq request.path user_home_url val=home_url default=request.path as redirect_url %}
+                <a id="header_menu_button_logout" href="{% url 'logout' %}" title="{% trans 'Log out'%}">
                     <i class="fa fa-sign-out fa-fw"></i>
                     <span class="visible-xs-inline">{% trans 'Log out' %}</span>
                 </a>
             </li>
         {% else %}
             <li>
-            <a id="header_menu_button_login" href="{% url 'friendly_login' %}?next={{request.path}}">
-                <i class="fa fa-sign-in fa-lg"></i>  {% trans 'Log in'%}
+                {% url 'aristotle_mdr:home' as home_url %}
+                {% url 'aristotle_mdr:userHome' as user_home_url %}
+                {% ifeq request.path home_url val=user_home_url default=request.path as redirect_url %}
+                <a id="header_menu_button_login" href="{% url 'friendly_login' %}?next={{redirect_url}}">
+                    <i class="fa fa-sign-in fa-lg"></i>  {% trans 'Log in'%}
+                </a>
+            </li>
+            {% if config.SELF_SIGNUP.enabled %}
+            <li>
+            <a id="header_menu_button_signup" href="{% url 'aristotle-user:signup_register' %}">
+                <i class="fa fa-user-plus"></i>  {% trans 'Sign Up' %}
             </a>
             </li>
+            {% endif %}
         {% endif %}
         </ul>
     </div>

@@ -30,7 +30,7 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
     install_requires = [
-        'djangorestframework>=3.0',
+        'djangorestframework>=3.7,<3.8',
         'django-rest-swagger',
         'django_filter',
         'django-jsonforms',

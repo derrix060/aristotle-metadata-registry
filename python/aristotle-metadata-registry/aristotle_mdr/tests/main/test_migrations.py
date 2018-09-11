@@ -178,3 +178,60 @@ class TestDedMigration(MigrationsTestCase, TestCase):
         orig_de_pks = [self.de1.pk, self.de2.pk]
 
         self.assertEqual(set(de_pks), set(orig_de_pks))
+
+
+class TestLowercaseEmailMigration(MigrationsTestCase, TestCase):
+
+    app = 'aristotle_mdr_user_management'
+    migrate_from = '0001_initial'
+    migrate_to = '0002_lowercase_emails'
+
+    def setUpBeforeMigration(self, apps):
+        user = apps.get_model('aristotle_mdr_user_management', 'User')
+
+        user.objects.create(
+            email='FIRST@example.com',
+        )
+        user.objects.create(
+            email='Second@example.com',
+        )
+
+    def test_migration(self):
+        user = self.apps.get_model('aristotle_mdr_user_management', 'User')
+        self.assertEqual(user.objects.count(), 2)
+        self.assertTrue(user.objects.filter(email='first@example.com').exists())
+        self.assertTrue(user.objects.filter(email='second@example.com').exists())
+        self.assertFalse(user.objects.filter(email='FIRST@example.com').exists())
+        self.assertFalse(user.objects.filter(email='Second@example.com').exists())
+
+
+class TestRaActiveMigration(MigrationsTestCase, TestCase):
+
+    migrate_from = '0032_add_new_active'
+    migrate_to = '0033_ra_levels'
+
+    def setUpBeforeMigration(self, apps):
+
+        ra = apps.get_model('aristotle_mdr', 'RegistrationAuthority')
+
+        self.ra1 = ra.objects.create(
+            name='ActiveRA',
+            definition='defn',
+            active=True
+        )
+        self.ra2 = ra.objects.create(
+            name='InactiveRA',
+            definition='defn',
+            active=False
+        )
+
+    def test_migration(self):
+
+        ra = self.apps.get_model('aristotle_mdr', 'RegistrationAuthority')
+        from aristotle_mdr.models import RA_ACTIVE_CHOICES
+
+        activera = ra.objects.get(name='ActiveRA')
+        self.assertEqual(activera.new_active, RA_ACTIVE_CHOICES.active)
+
+        inactivera = ra.objects.get(name='InactiveRA')
+        self.assertEqual(inactivera.new_active, RA_ACTIVE_CHOICES.inactive)

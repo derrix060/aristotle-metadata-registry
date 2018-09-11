@@ -3,7 +3,7 @@ FROM python:3.6
 
 # Use the same pip and pipenv as heroku
 RUN pip install -U setuptools pip==9.0.2 pipenv==11.8.2 && pip --version && \
-    pip install whoosh gunicorn tox whitenoise
+    pip install whoosh gunicorn tox whitenoise~=3.3.0 psycopg2
 ADD . /usr/src/app
 WORKDIR /usr/src/app/docker
 

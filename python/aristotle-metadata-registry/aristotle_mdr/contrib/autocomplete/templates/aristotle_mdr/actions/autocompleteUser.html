@@ -1,0 +1,17 @@
+{% load i18n l10n %}
+{% load static %}
+
+<span class="autocomplete-item block" data-html="true" data-value="{{ result.pk|unlocalize }}">
+{% if result.get_full_name %}
+    {{ result.highlight.full_name|safe }}
+    {% if result == request.user %}
+    (You)
+    {% endif %}
+    <div>{{ result.highlight.email|safe }}</div>
+{% else %}
+    {{ result.highlight.email|safe }}
+    {% if result == request.user %}
+    (You)
+    {% endif %}
+{% endif %}
+</span>

@@ -2,23 +2,37 @@ import datetime
 from django.apps import apps
 from django.contrib.auth.decorators import login_required
 from braces.views import LoginRequiredMixin
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, LogoutView
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.utils.decorators import method_decorator
-from django.views.generic import DetailView, ListView, UpdateView
+from django.views.decorators.cache import never_cache
+from django.views.generic import (DetailView,
+                                  ListView,
+                                  UpdateView,
+                                  FormView,
+                                  TemplateView,
+                                  View)
+
+from django.core.exceptions import ValidationError
+from django.contrib import messages
+from django.utils.translation import ugettext_lazy as _
 
 from aristotle_mdr import forms as MDRForms
 from aristotle_mdr import models as MDR
-from aristotle_mdr.views.utils import paginated_list, paginated_workgroup_list
+from aristotle_mdr.views.utils import (paginated_list,
+                                       paginated_workgroup_list,
+                                       paginated_registration_authority_list,
+                                       GenericListWorkgroup)
 from aristotle_mdr.utils import fetch_metadata_apps
 from aristotle_mdr.utils import get_aristotle_url
 
 import json
+import random
 
 
 class FriendlyLoginView(LoginView):
@@ -33,6 +47,35 @@ class FriendlyLoginView(LoginView):
 
         if self.request.GET.get('welcome', '') == 'true':
             context.update({'welcome': True})
+
+        return context
+
+
+class FriendlyLogoutView(LogoutView):
+
+    @method_decorator(never_cache)
+    def dispatch(self, request, *args, **kwargs):
+        messages.info(request, _('You have been logged out'))
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ProfileView(LoginRequiredMixin, TemplateView):
+
+    template_name='aristotle_mdr/user/userProfile.html'
+
+    def get_sessions(self, user):
+        return user.session_set.filter(expire_date__gt=datetime.datetime.now())
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+
+        user = self.request.user
+        sessions = self.get_sessions(user)
+        context.update({
+            'user': user,
+            'sessions': sessions,
+            'session_key': self.request.session.session_key
+        })
 
         return context
 
@@ -256,7 +299,59 @@ class EditView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def get_success_url(self):
-        return reverse('aristotle:userHome')
+        return reverse('aristotle:userProfile')
+
+    def get_initial(self):
+        initial = super().get_initial()
+
+        profilepic = self.object.profile.profilePicture
+
+        if profilepic:
+            initial.update({
+                'profile_picture': profilepic
+            })
+
+        return initial
+
+    def form_valid(self, form):
+
+        # Save user object
+        self.object = form.save()
+
+        profile = self.object.profile
+
+        picture = form.cleaned_data['profile_picture']
+        picture_update = True
+
+        if picture:
+            if 'profile_picture' in form.changed_data:
+                profile.profilePicture = picture
+            else:
+                picture_update = False
+        else:
+            profile.profilePicture = None
+
+        # Perform model validation on profile
+        if picture_update:
+            valid = True
+            invalid_message = ''
+            try:
+                # Resize and format change done on clean
+                profile.full_clean()
+            except ValidationError as e:
+                valid = False
+                if 'profilePicture' in e.message_dict:
+                    invalid_message = e.message_dict['profilePicture']
+                else:
+                    invalid_message = e
+
+            if valid:
+                profile.save()
+            else:
+                form.add_error('profile_picture', 'Image could not be saved. {}'.format(invalid_message))
+                return self.form_invalid(form)
+
+        return HttpResponseRedirect(self.get_success_url())
 
 
 @login_required
@@ -270,19 +365,37 @@ def favourites(request):
     return paginated_list(request, items, "aristotle_mdr/user/userFavourites.html", context)
 
 
-@login_required
-def registrar_tools(request):
-    if not request.user.profile.is_registrar:
-        raise PermissionDenied
-    page = render(request, "aristotle_mdr/user/userRegistrarTools.html")
-    return page
+class RegistrarTools(LoginRequiredMixin, View):
+
+    template_name = "aristotle_mdr/user/registration_authority/list_all.html"
+    model = MDR.RegistrationAuthority
+
+    def get_queryset(self):
+        # Return all the ra's a user is a manager of
+        manager = Q(managers__pk=self.request.user.pk)
+        registrar = Q(registrars__pk=self.request.user.pk)
+        visible = Q(active__in=[0, 1])
+        return MDR.RegistrationAuthority.objects.filter(visible, manager | registrar)
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        return paginated_registration_authority_list(
+            request,
+            queryset,
+            self.template_name,
+            {
+                'hide_add_button': True,
+                'title_text': 'Your Registration Authorities',
+                'activeTab': 'registrarTools'
+            }
+        )
 
 
 @login_required
 def review_list(request):
     if not request.user.profile.is_registrar:
         raise PermissionDenied
-    authorities = [i[0] for i in request.user.profile.registrarAuthorities.all().values_list('id')]
+    authorities = [i[0] for i in request.user.profile.registrarAuthorities.filter(active=0).values_list('id')]
 
     # Registars can see items they have been asked to review
     q = Q(Q(registration_authority__id__in=authorities) & ~Q(status=MDR.REVIEW_STATES.cancelled))
@@ -295,7 +408,7 @@ def review_list(request):
 def my_review_list(request):
     # Users can see any items they have been asked to review
     q = Q(requester=request.user)
-    reviews = MDR.ReviewRequest.objects.visible(request.user).filter(q)
+    reviews = MDR.ReviewRequest.objects.visible(request.user).filter(q).filter(registration_authority__active=0)
     return paginated_list(request, reviews, "aristotle_mdr/user/my_review_list.html", {'reviews': reviews})
 
 
@@ -353,21 +466,45 @@ class CreatedItemsListView(ListView):
         return paginate_sort_opts.get(self.order)
 
 
-@login_required
-def workgroups(request):
-    text_filter = request.GET.get('filter', "")
-    workgroups = request.user.profile.myWorkgroups
-    if text_filter:
-        workgroups = workgroups.filter(Q(name__icontains=text_filter) | Q(definition__icontains=text_filter))
-    context = {'filter': text_filter}
-    return paginated_workgroup_list(request, workgroups, "aristotle_mdr/user/userWorkgroups.html", context)
+class MyWorkgroupList(GenericListWorkgroup):
+    template_name = "aristotle_mdr/user/userWorkgroups.html"
+
+    def get_initial_queryset(self):
+        return self.request.user.profile.myWorkgroups
 
 
-@login_required
-def workgroup_archives(request):
-    text_filter = request.GET.get('filter', None)
-    workgroups = request.user.profile.workgroups.filter(archived=True)
-    if text_filter:
-        workgroups = workgroups.filter(Q(name__icontains=text_filter) | Q(definition__icontains=text_filter))
-    context = {'filter': text_filter}
-    return paginated_workgroup_list(request, workgroups, "aristotle_mdr/user/userWorkgroupArchives.html", context)
+class WorkgroupArchiveList(GenericListWorkgroup):
+    template_name = "aristotle_mdr/user/userWorkgroupArchives.html"
+
+    def get_initial_queryset(self):
+        user = self.request.user
+        return (
+            user.viewer_in.all() |
+            user.submitter_in.all() |
+            user.steward_in.all() |
+            user.workgroup_manager_in.all()
+        ).filter(archived=True).distinct()
+
+
+def profile_picture(request, uid):
+
+    template_name = 'aristotle_mdr/user/user-head.svg'
+
+    # Seed with user id
+    random.seed(uid)
+
+    colors = []
+    for i in range(2):
+        colors.append('#{0:X}'.format(random.randint(0, 0xFFFFFF)))
+
+    context = {
+        'toga_color': colors[0],
+        'headshot_color': colors[1]
+    }
+
+    return render(
+        request,
+        template_name,
+        context=context,
+        content_type='image/svg+xml'
+    )

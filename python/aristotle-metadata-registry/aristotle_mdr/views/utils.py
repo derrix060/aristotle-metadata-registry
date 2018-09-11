@@ -13,9 +13,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from django.views.generic.detail import BaseDetailView
 from django.views.generic import (
-    DetailView, FormView
+    DetailView, FormView, ListView
 )
 
+from aristotle_mdr import models as MDR
 
 paginate_sort_opts = {
     "mod_asc": ["modified"],
@@ -221,6 +222,88 @@ def generate_visibility_matrix(user):
     return matrix
 
 
+class SortedListView(ListView):
+    """
+    Can be used to replace current paginated fucntion views,
+    while retaining the template
+
+    allowed_sorts can be a dict mapping names to sorts or just a list of sorts
+    """
+
+    allowed_sorts = []
+    default_sort = ''
+
+    def dispatch(self, request, *args, **kwargs):
+        self.text_filter = request.GET.get('filter', "")
+        self.sort = request.GET.get('sort', "")
+        return super().dispatch(request, *args, **kwargs)
+
+    def sort_queryset(self, queryset):
+        # To be used in get_queryset
+        sort = ''
+        asc = True
+        if self.sort:
+            if '_' in self.sort:
+                parts = self.sort.split('_')
+                sort = parts[0]
+                if parts[1] == 'desc':
+                    asc = False
+            else:
+                sort = self.sort
+
+            if sort in self.allowed_sorts:
+
+                if type(self.allowed_sorts) == dict:
+                    sort = self.allowed_sorts[sort]
+
+                if not asc:
+                    sort = '-' + sort
+
+                return queryset.order_by(sort)
+
+        if not self.default_sort:
+            return queryset
+        else:
+            return queryset.order_by(self.default_sort)
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context.update({
+            'filter': self.text_filter,
+            'page': context['page_obj'],
+            'sort': self.sort
+        })
+        return context
+
+
+class GenericListWorkgroup(LoginRequiredMixin, SortedListView):
+
+    model = MDR.Workgroup
+    redirect_unauthenticated_users = True
+    paginate_by = 20
+
+    allowed_sorts = {
+        'items': 'items__count',
+        'name': 'name',
+        'users': 'viewers__count'
+    }
+
+    default_sort = 'name'
+
+    def get_initial_queryset(self):
+        raise NotImplementedError
+
+    def get_queryset(self):
+        workgroups = self.get_initial_queryset().annotate(Count('items')).annotate(Count('viewers'))
+        workgroups = workgroups.prefetch_related('viewers', 'managers', 'submitters', 'stewards')
+
+        if self.text_filter:
+            workgroups = workgroups.filter(Q(name__icontains=self.text_filter) | Q(definition__icontains=self.text_filter))
+
+        workgroups = self.sort_queryset(workgroups)
+        return workgroups
+
+
 class GroupMemberMixin(object):
     user_pk_kwarg = "user_pk"
 
@@ -275,3 +358,14 @@ class MemberRemoveFromGroupView(GroupMemberMixin, LoginRequiredMixin, Permission
         for role in self.get_object().list_roles_for_user(self.user_to_change):
             self.get_object().removeRoleFromUser(role, self.user_to_change)
         return self.get_success_url()
+
+
+class AlertFieldsMixin:
+    """Provide a list of fields where help text should be rendered as an alert"""
+
+    alert_fields = []
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({'alert_fields': self.alert_fields})
+        return context

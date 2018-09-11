@@ -10,7 +10,7 @@
 
     <div class="col-md-1 col-md-offset-11 col-xs-4 col-xs-offset-8 ">
         <div class="btn-group pull-right" role="group" >
-            <a class="btn btn-success" href="{% url 'aristotle:addWorkgroupMembers' item.pk %}"
+            <a class="btn btn-default" href="{% url 'aristotle:addWorkgroupMembers' item.pk %}"
                 data-toggle="modal" data-target="#wg_page_modal">Add a user</a>
         </div>
     </div>
@@ -26,33 +26,29 @@
         </thead>
         <tbody>
 
-        {% for member in item.members.all %}
+        {% for listitem in userlist %}
         <tr>
         <td>
-            {% include "aristotle_mdr/users_management/helper/user_table_display.html" with user=member %}
+            {% include "aristotle_mdr/users_management/helper/user_table_display.html" with user=listitem.user %}
         </td>
         <td>
-            {% comment %}
-            TODO: THIS IS SUPER INEFFICIENT AND USES NUMEROUS DATABASE CALLS BUT WORKS.
-            PROFILE AND FIX IN THE FUTURE.
-            {% endcomment %}
-            {{ item|user_roles_for_group:member|join:", " }}
+            {{ listitem.roles }}
         </td>
         <td>
             <div class="btn-group">
               <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i class="fa fa-cog"></i>
-                <span class="sr-only">Manage permissions for {{ member }}</span>
+                <span class="sr-only">Manage permissions for {{ listitem.user }}</span>
                 <span class="caret"></span>
               </button>
               <ul class="dropdown-menu pull-right">
                 <li>
-                    <a href="{% url 'aristotle:workgroup_member_change_role' item.id  member.pk %}"
+                    <a href="{% url 'aristotle:workgroup_member_change_role' item.id  listitem.user.pk %}"
                         data-toggle="modal" data-target="#wg_page_modal">Change roles</a>
                 </li>
                 <li role="separator" class="divider"></li>
                 <li class="alert-danger">
-                    <a href="{% url 'aristotle:workgroup_member_remove' item.id  member.pk %}"
+                    <a href="{% url 'aristotle:workgroup_member_remove' item.id  listitem.user.pk %}"
                     data-toggle="modal" data-target="#wg_page_modal">Remove from this group</a>
                 </li>
               </ul>

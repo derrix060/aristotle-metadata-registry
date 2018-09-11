@@ -266,11 +266,13 @@ def validate_aristotle_settings(aristotle_settings, strict_mode):
             check_settings=aristotle_settings.get(sub_setting, [])
             assert(type(check_settings) is list)
             assert(all(type(f) is str for f in check_settings))
-        except:
+        except Exception as e:
+            logger.error(error_messages[err])
+            logger.error(e)
+            logger.error(str([sub_setting, check_settings, type(check_settings)]))
             if strict_mode:
                 raise ImproperlyConfigured(error_messages[err])
             else:
-                logger.error(error_messages[err])
                 aristotle_settings[sub_setting] = []
 
     return aristotle_settings

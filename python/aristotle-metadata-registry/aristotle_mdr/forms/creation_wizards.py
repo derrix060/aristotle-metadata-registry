@@ -4,10 +4,10 @@ from django.utils import timezone, dateparse
 from django.utils.translation import ugettext_lazy as _
 
 import aristotle_mdr.models as MDR
-from aristotle_mdr.exceptions import NoUserGivenForUserForm
-from aristotle_mdr.perms import user_can_move_between_workgroups, user_can_move_any_workgroup, user_can_remove_from_workgroup
 from aristotle_mdr.contrib.autocomplete import widgets
-
+from aristotle_mdr.exceptions import NoUserGivenForUserForm
+from aristotle_mdr.managers import ConceptQuerySet
+from aristotle_mdr.perms import user_can_move_between_workgroups, user_can_move_any_workgroup, user_can_remove_from_workgroup
 from aristotle_mdr.widgets.bootstrap import BootstrapDateTimePicker
 
 
@@ -106,13 +106,19 @@ class ConceptForm(WorkgroupVerificationMixin, UserAwareModelForm):
     Add this in when we look at reintroducing the fancy templates.
     required_css_class = 'required'
     """
+
     def __init__(self, *args, **kwargs):
         # TODO: Have tis throw a 'no user' error
         first_load = kwargs.pop('first_load', None)
         super().__init__(*args, **kwargs)
 
         for f in self.fields:
-            if hasattr(self.fields[f], 'queryset'):
+            if f == "workgroup":
+                self.fields[f].widget = widgets.WorkgroupAutocompleteSelect()
+                self.fields[f].widget.choices = self.fields[f].choices
+                if not self.user.is_superuser:
+                    self.fields['workgroup'].queryset = self.user.profile.editable_workgroups
+            elif hasattr(self.fields[f], 'queryset') and type(self.fields[f].queryset) == ConceptQuerySet:
                 if hasattr(self.fields[f].queryset, 'visible'):
                     if f in [m2m.name for m2m in self._meta.model._meta.many_to_many]:
                         field_widget = widgets.ConceptAutocompleteSelectMultiple
@@ -121,14 +127,11 @@ class ConceptForm(WorkgroupVerificationMixin, UserAwareModelForm):
                     self.fields[f].queryset = self.fields[f].queryset.all().visible(self.user)
                     self.fields[f].widget = field_widget(model=self.fields[f].queryset.model)
                     self.fields[f].widget.choices = self.fields[f].choices
-            if type(self.fields[f]) == forms.fields.DateField:
+            elif type(self.fields[f]) == forms.fields.DateField:
                 self.fields[f].widget = BootstrapDateTimePicker(options={"format": "YYYY-MM-DD"})
-            if type(self.fields[f]) == forms.fields.DateTimeField:
+            elif type(self.fields[f]) == forms.fields.DateTimeField:
                 self.fields[f].widget = BootstrapDateTimePicker(options={"format": "YYYY-MM-DD"})
 
-        if not self.user.is_superuser:
-            self.fields['workgroup'].queryset = self.user.profile.editable_workgroups
-        self.fields['name'].widget = forms.widgets.TextInput()
         self.show_slots_tab = True
 
     def concept_fields(self):
@@ -232,8 +235,6 @@ class Concept_2_Results(ConceptForm):
         super().__init__(*args, **kwargs)
         self.fields['workgroup'].queryset = self.user.profile.editable_workgroups
         self.fields['workgroup'].initial = self.user.profile.activeWorkgroup
-        self.fields['name'].widget = forms.widgets.TextInput()
-        # self.fields['definition'].widget = forms.widgets.TextInput()
         if not self.check_similar:
             self.fields.pop('make_new_item')
 

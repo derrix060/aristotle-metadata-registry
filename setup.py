@@ -8,8 +8,8 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 __version_info__ = {
     'major': 2,
-    'minor': 0,
-    'micro': 0,
+    'minor': 1,
+    'micro': 4,
     'releaselevel': 'final',
     'serial': 5
 }
@@ -130,7 +130,7 @@ class MonoRepoPackageFinder(PackageFinder):
         for d in os.listdir(py_path):
             if os.path.isdir(os.path.join(py_path, d)):
                 setup_py_path = os.path.join(py_path, d, "setup.py")
-                if os.path.isfile(os.path.join(setup_py_path)): 
+                if os.path.isfile(os.path.join(setup_py_path)):
                     with open(setup_py_path, "r") as f:
                         import ast
                         t = compile(f.read(), setup_py_path, 'exec', ast.PyCF_ONLY_AST)

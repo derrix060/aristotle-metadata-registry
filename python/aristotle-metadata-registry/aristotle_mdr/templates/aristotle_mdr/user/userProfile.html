@@ -1,0 +1,74 @@
+{% extends "aristotle_mdr/user/userHome.html" %}
+
+{% block title %}Profile{% endblock %}
+{% block sidebar %}
+    {% include "aristotle_mdr/user/userSideBar.html" with activeTab='edit' %}
+{% endblock %}
+
+{% block page %}
+<h1>Profile</h1>
+
+<div class="row">
+  <div class="col-md-3">
+    
+    <div class="panel panel-default">
+      <div class="panel-body">
+        {% if user.profile.profilePicture %}
+          <img class="img-responsive" src="{{ user.profile.profilePicture.url }}" alt="Profile Picture"></img>
+        {% else %}
+          <img class="img-responsive" src="{% url 'aristotle_mdr:dynamic_profile_picture' user.id %}" alt="Profile Picture"></img>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        Actions
+      </div>
+      <div class="list-group">
+        <a class="list-group-item" href="{% url 'password_change' %}">Change Password</a>
+      </div>
+    </div>
+
+  </div>
+  <div class="col-md-9">
+
+    <h2>{{ user.full_name }}</h2>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        Personal Info
+        <a class="button button-default pull-right" href="{% url 'aristotle_mdr:userEdit' %}">
+          Edit
+          <i class="fa fa-pencil" aria-hidden="true"></i>
+        </a>
+      </div>
+      <table class="table">
+        <tbody>
+          <tr>
+            <th>Email</th>
+            <td>{{ user.email }}</td>
+          </tr>
+          <tr>
+            <th>Display Name</th>
+            <td>{{ user.short_name }}</td>
+          </tr>
+          <tr>
+            <th>Full Name</th>
+            <td>{{ user.full_name }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        Sessions
+      </div>
+      {% include 'aristotle_mdr/user/session_list.html' with object_list=sessions %}
+    </div>
+
+
+  </div>
+</div>
+{% endblock %}

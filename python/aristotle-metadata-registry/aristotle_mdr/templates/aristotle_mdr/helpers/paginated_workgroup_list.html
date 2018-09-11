@@ -22,7 +22,7 @@ Showing {{ page.paginator.count }} results.
             {% elif sort == "name_desc" %}
             <a href="?{% paginator_get request page.number pop='sort' %}&sort=name_asc"><i class="fa fa-sort-desc"></i></a>
             {% else %}
-            <a href="?{% paginator_get request page.number pop='sort' %}&sort=name_desc"><i class="fa fa-sort"></i></a>
+            <a href="?{% paginator_get request page.number pop='sort' %}&sort=name_asc"><i class="fa fa-sort"></i></a>
             {% endif %}
         </th>
         <th>{% trans 'Definition' %}
@@ -60,8 +60,8 @@ Showing {{ page.paginator.count }} results.
             <a href="{{ item.get_absolute_url }}">{{ item.name }}</a>
         </td>
         <td>{{ item.definition|striptags|safe|truncatewords:50 }}</td>
-        <td>{{ item.members.count }}</td>
-        <td>{{ item.items.count }}</td>
+        <td>{{ item|distinct_members_count }}</td>
+        <td>{{ item.items__count }}</td>
         {% if show_all %}
         <td>
             {% if item.archived %}

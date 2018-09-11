@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.db import transaction
-from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponse, HttpResponseNotFound
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import ugettext_lazy as _
@@ -189,12 +189,19 @@ class ReviewAcceptView(ReviewChangesView):
     def dispatch(self, request, *args, **kwargs):
 
         review = self.get_review()
+
+        if not self.ra_active_check(review):
+            return HttpResponseNotFound('Registration Authority is not active')
+
         if not perms.user_can_view_review(self.request.user, review):
             raise PermissionDenied
         if review.status != MDR.REVIEW_STATES.submitted:
             return HttpResponseRedirect(reverse('aristotle_mdr:userReviewDetails', args=[review.pk]))
 
         return super().dispatch(request, *args, **kwargs)
+
+    def ra_active_check(self, review):
+        return review.registration_authority.is_active
 
     def get_review(self):
         self.review = get_object_or_404(MDR.ReviewRequest, pk=self.kwargs['review_id'])

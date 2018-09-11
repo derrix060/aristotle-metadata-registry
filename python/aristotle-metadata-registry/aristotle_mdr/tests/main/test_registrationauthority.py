@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 import aristotle_mdr.models as models
@@ -198,6 +198,31 @@ class RAListTests(utils.LoggedInViewPages,TestCase):
         response = self.client.get(reverse('aristotle:registrationauthority_list'))
         self.assertEqual(response.status_code, 200)
 
+    @tag('registrar_tools')
+    def test_viewer_cannot_tools_list(self):
+        self.login_viewer()
+
+        response = self.client.get(reverse('aristotle_mdr:userRegistrarTools'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['page'].object_list), 0)
+
+    @tag('registrar_tools')
+    def test_viewer_can_tools_list(self):
+
+        self.login_registrar()
+
+        response = self.client.get(reverse('aristotle_mdr:userRegistrarTools'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['page'].object_list), 1)
+
+    @tag('registrar_tools')
+    def test_manager_can_tools_list(self):
+
+        self.login_ramanager()
+
+        response = self.client.get(reverse('aristotle_mdr:userRegistrarTools'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['page'].object_list), 1)
 
 
 class RAManageTests(utils.LoggedInViewPages,TestCase):

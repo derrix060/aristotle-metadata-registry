@@ -1,9 +1,10 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 from django.conf import settings
 
 import aristotle_mdr.models as models
 import aristotle_mdr.perms as perms
 import aristotle_mdr.tests.utils as utils
+from aristotle_mdr.contrib.identifiers import models as ident_models
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
@@ -16,6 +17,8 @@ from django.utils import timezone
 
 import string
 import random
+
+import unittest
 
 setup_aristotle_test_environment()
 
@@ -228,7 +231,7 @@ class TestSearch(utils.LoggedInViewPages,TestCase):
         # Deadpool isn't an Xman yet, still no results.
         psqs = get_permission_sqs()
         psqs = psqs.auto_query('deadpool').apply_permission_checks(self.viewer)
-        self.assertDelayedEqual(len(psqs),0)
+        self.assertEqual(len(psqs),0)
 
         with reversion.create_revision():
             dp.workgroup = self.xmen_wg
@@ -238,21 +241,21 @@ class TestSearch(utils.LoggedInViewPages,TestCase):
         # Charles is a viewer, Deadpool is in X-men, should have results now.
         psqs = get_permission_sqs()
         psqs = psqs.auto_query('deadpool').apply_permission_checks(self.viewer)
-        self.assertDelayedEqual(len(psqs),1)
+        self.assertEqual(len(psqs),1)
 
         response = self.client.get(reverse('aristotle:search')+"?q=deadpool")
         self.assertTrue(perms.user_can_view(self.viewer,dp))
-        self.assertDelayedEqual(len(response.context['page'].object_list),1)
+        self.assertEqual(len(response.context['page'].object_list),1)
         self.assertEqual(response.context['page'].object_list[0].object.item,dp)
 
         # Take away Charles viewing rights and no results again.
         self.xmen_wg.removeRoleFromUser('viewer',self.viewer)
         psqs = get_permission_sqs()
         psqs = psqs.auto_query('deadpool').apply_permission_checks(self.viewer)
-        self.assertDelayedEqual(len(psqs),0)
+        self.assertEqual(len(psqs),0)
 
         response = self.client.get(reverse('aristotle:search')+"?q=deadpool")
-        self.assertDelayedEqual(len(response.context['page'].object_list),0)
+        self.assertEqual(len(response.context['page'].object_list),0)
 
     def test_workgroup_member_search_has_valid_facets(self):
         self.logout()
@@ -411,13 +414,13 @@ class TestSearch(utils.LoggedInViewPages,TestCase):
 
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon")
         self.assertEqual(response.status_code,200)
-        self.assertDelayedEqual(len(response.context['page'].object_list),1)
+        self.assertEqual(len(response.context['page'].object_list),1)
 
         self.logout()
         self.login_editor()
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon")
         self.assertEqual(response.status_code,200)
-        self.assertDelayedEqual(len(response.context['page'].object_list),0)
+        self.assertEqual(len(response.context['page'].object_list),0)
 
 
     def test_user_can_search_own_content_and_other_content(self):
@@ -447,13 +450,13 @@ class TestSearch(utils.LoggedInViewPages,TestCase):
 
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon")
         self.assertEqual(response.status_code,200)
-        self.assertDelayedEqual(len(response.context['page'].object_list),1)
+        self.assertEqual(len(response.context['page'].object_list),1)
 
         self.logout()
         self.login_editor()
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon")
         self.assertEqual(response.status_code,200)
-        self.assertDelayedEqual(len(response.context['page'].object_list),0)
+        self.assertEqual(len(response.context['page'].object_list),0)
 
         # Get item
         item = models.ObjectClass.objects.get(name='pokemon')
@@ -461,7 +464,7 @@ class TestSearch(utils.LoggedInViewPages,TestCase):
 
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon")
         self.assertEqual(response.status_code,200)
-        self.assertDelayedEqual(len(response.context['page'].object_list),1)
+        self.assertEqual(len(response.context['page'].object_list),1)
 
 
     def test_facet_search(self):
@@ -489,7 +492,7 @@ class TestSearch(utils.LoggedInViewPages,TestCase):
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon")
 
         objs = response.context['page'].object_list
-        self.assertDelayedEqual(len(objs),3)
+        self.assertEqual(len(objs),3)
         extra_facets = response.context['form'].extra_facet_fields
 
         self.assertTrue(len(extra_facets) == 2)
@@ -501,30 +504,30 @@ class TestSearch(utils.LoggedInViewPages,TestCase):
 
         psqs = get_permission_sqs()
         psqs = psqs.auto_query('pokemon').apply_permission_checks(self.su)
-        self.assertDelayedEqual(len(psqs),3)
+        self.assertEqual(len(psqs),3)
 
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon")
         objs = response.context['page'].object_list
-        self.assertDelayedEqual(len(objs),3)
+        self.assertEqual(len(objs),3)
 
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon&f=object_class::%s"%oc.name)
 
         objs = response.context['page'].object_list
-        self.assertDelayedEqual(len(objs),2)
+        self.assertEqual(len(objs),2)
         self.assertTrue(de.pk in [o.object.pk for o in objs])
         self.assertTrue(dec.pk in [o.object.pk for o in objs])
 
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon&f=data_element_concept::%s"%dec.name.replace(' ','+'))
 
         objs = response.context['page'].object_list
-        self.assertDelayedEqual(len(objs),2)
+        self.assertEqual(len(objs),2)
         self.assertTrue(de.pk in [o.object.pk for o in objs])
         self.assertTrue(dec.pk in [o.object.pk for o in objs])
 
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon&models=aristotle_mdr.dataelement&f=data_element_concept::%s"%dec.name.replace(' ','+'))
 
         objs = response.context['page'].object_list
-        self.assertDelayedEqual(len(objs),1)
+        self.assertEqual(len(objs),1)
         self.assertTrue(de.pk in [o.object.pk for o in objs])
         self.assertTrue(dec.pk not in [o.object.pk for o in objs])
 
@@ -547,13 +550,13 @@ class TestSearch(utils.LoggedInViewPages,TestCase):
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon")
 
         objs = response.context['page'].object_list
-        self.assertDelayedEqual(len(objs),2)
+        self.assertEqual(len(objs),2)
 
         response = self.client.get(reverse('aristotle:search')+"?q=pokemon&models=aristotle_mdr.dataelement")
 
         objs = response.context['page'].object_list
-        self.assertDelayedEqual(len(objs),1)
-        self.assertTrue(objs[0].object.pk,de.pk)
+        self.assertEqual(len(objs),1)
+        self.assertEqual(objs[0].object.pk,de.pk)
 
     def test_values_in_conceptual_domain_search(self):
         # For bug #676
@@ -670,7 +673,6 @@ class TestTokenSearch(TestCase):
         haystack.connections.reload('default')
 
         self.su = get_user_model().objects.create_superuser('super@example.com','user')
-
         self.ra = models.RegistrationAuthority.objects.create(name="Kelly Act")
         self.registrar = get_user_model().objects.create_user('william.styker@weaponx.mil','mutantsMustDie')
         self.ra.giveRoleToUser('registrar',self.registrar)
@@ -688,6 +690,48 @@ class TestTokenSearch(TestCase):
         for item in self.item_xmen:
             self.ra.register(item,models.STATES.standard,self.su)
 
+    def add_identifiers(self):
+        namespace = ident_models.Namespace.objects.create(
+            naming_authority=self.ra,
+            shorthand_prefix='pre'
+        )
+        alt_namespace = ident_models.Namespace.objects.create(
+            naming_authority=self.ra,
+            shorthand_prefix='xmn'
+        )
+        self.custom_namespace = ident_models.Namespace.objects.create(
+            naming_authority=self.ra,
+            shorthand_prefix='ctm'
+        )
+
+        for xman in self.item_xmen:
+            ident_models.ScopedIdentifier.objects.create(
+                namespace=namespace,
+                identifier=xman.name[:3],
+                version='1',
+                concept=xman
+            )
+            ident_models.ScopedIdentifier.objects.create(
+                namespace=alt_namespace,
+                identifier=xman.name[:3],
+                version='1',
+                concept=xman
+            )
+
+    def add_new_identifier(self, obj, identifier, version='1'):
+        ident_models.ScopedIdentifier.objects.create(
+            namespace=self.custom_namespace,
+            identifier=identifier,
+            version=version,
+            concept=obj
+        )
+
+    def query_search(self, searchtext):
+        query_params = '?q=' + searchtext
+        response = self.client.get(reverse('aristotle:search')+query_params)
+        self.assertEqual(response.status_code,200)
+        return response.context['page'].object_list
+
     def test_token_version_search(self):
         self.assertEqual(models.ObjectClass.objects.get(version='0.1.0').name,"wolverine")
 
@@ -695,20 +739,82 @@ class TestTokenSearch(TestCase):
         self.assertEqual(response.status_code,200)
         objs = response.context['page'].object_list
         self.assertEqual(len(objs),1)
-        self.assertTrue(objs[0].object.name,"wolverine")
+        self.assertEqual(objs[0].object.name,"wolverine")
 
     def test_token_type_search(self):
         response = self.client.get(reverse('aristotle:search')+"?q=type:property")
         self.assertEqual(response.status_code,200)
         objs = response.context['page'].object_list
         self.assertEqual(len(objs),1)
-        self.assertTrue(objs[0].object.name,"Power")
+        self.assertEqual(objs[0].object.name,"Power")
 
         response = self.client.get(reverse('aristotle:search')+"?q=type:p")
         self.assertEqual(response.status_code,200)
         objs = response.context['page'].object_list
         self.assertEqual(len(objs),1)
-        self.assertTrue(objs[0].object.name,"Power")
+        self.assertEqual(objs[0].object.name,"Power")
+
+    @tag('id_search')
+    @unittest.skipIf('WhooshEngine' in settings.HAYSTACK_CONNECTIONS['default']['ENGINE'],
+                     'Searching within a multivalue string is not supported in whoosh')
+    def test_token_id_search_specific_ns(self):
+        # Tests that only the identifier with the correct
+        # namespace is returned when one is specified
+        self.add_identifiers()
+        objs = self.query_search('id:pre/ice')
+        self.assertEqual(len(objs),1)
+        self.assertEqual(objs[0].object.name,"iceman")
+
+    @tag('id_search')
+    @unittest.skipIf('WhooshEngine' in settings.HAYSTACK_CONNECTIONS['default']['ENGINE'],
+                     'Searching within a multivalue string is not supported in whoosh')
+    def test_token_id_search_general(self):
+        # Tests that if only an identifier is used, all namespaces are returned
+        self.add_identifiers()
+        self.add_new_identifier(self.item_xmen[0], 'ice')
+        objs = self.query_search('id:ice')
+        self.assertEqual(len(objs),2)
+
+    @tag('id_search')
+    def test_token_namespace_search(self):
+        # Tests namespace search returns all in that namespace
+        self.add_identifiers()
+        objs = self.query_search('ns:pre')
+        self.assertEqual(len(objs),10)
+
+    @tag('id_search')
+    def test_token_id_version_search(self):
+        # Tests that only correct version is returned when a version is given
+        self.add_identifiers()
+        self.add_new_identifier(self.item_xmen[0], 'test', '1')
+        self.add_new_identifier(self.item_xmen[1], 'test', '2')
+        objs = self.query_search('id:ctm/test/1')
+        self.assertEqual(len(objs),1)
+        self.assertEqual(objs[0].object.name,"wolverine")
+
+    @tag('token_search')
+    def test_token_statuses_search(self):
+        # Tests that only the identifier with the correct
+        # namespace is returned when one is specified
+        objs = self.query_search('wolverine hs:standard')
+        self.assertEqual(len(objs),1)
+        self.assertEqual(objs[0].object.name,"wolverine")
+
+        objs = self.query_search('wolverine statuses:standard')
+        self.assertEqual(len(objs),1)
+        self.assertEqual(objs[0].object.name,"wolverine")
+
+        animal = models.ObjectClass.objects.create(
+            name="Wolverine (animal)",version="0.0.1",
+            definition="An regular animal found on Earth-1218 - not a mutant from a comic book."
+        )
+        self.ra.register(animal,models.STATES.recorded,self.su)
+
+        objs = self.query_search('wolverine statuses:standard,recorded')
+        self.assertEqual(len(objs),2)
+        objs = sorted(objs, key=lambda obj: len(obj.name))
+        self.assertEqual(objs[0].object.name,"wolverine")
+        self.assertEqual(objs[1].object.name,"Wolverine (animal)")
 
 
 class TestSearchDescriptions(TestCase):

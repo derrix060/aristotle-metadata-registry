@@ -1,0 +1,1 @@
+{% spaceless %}{{ config.SITE_NAME|default:"Aristotle Metadata Registry" }} New User Signup{% endspaceless %}

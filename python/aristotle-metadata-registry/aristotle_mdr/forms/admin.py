@@ -114,7 +114,7 @@ class AdminConceptForm(ConceptForm, WorkgroupVerificationMixin):
 class StatusInlineForm(forms.ModelForm):
     registrationAuthority = forms.ModelChoiceField(
         label='Registration Authority',
-        queryset=MDR.RegistrationAuthority.objects,
+        queryset=MDR.RegistrationAuthority.objects.filter(active=0),
         widget=widgets.RegistrationAuthoritySelect
     )
 

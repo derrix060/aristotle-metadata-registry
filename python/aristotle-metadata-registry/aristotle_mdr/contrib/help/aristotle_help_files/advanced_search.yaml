@@ -48,31 +48,95 @@
           box using the <tt>keyword:search_term</tt> format.
       
       </p>
-      
-      <h3><i class="fa fa-keyboard-o fa-fw"></i> Narrow search results using field name</h3>
+
+      <h3><i class="fa fa-keyboard-o fa-fw"></i> Narrow search results using tokens</h3>
       <p>
-          Field names, such as name, or version, can be used to limit results when searching.
+          Certain tokens and field names, such as name, or version, can be used to limit results when searching.
           These will force the search engine to only return results where terms appear in those fields.
       </p>
       <table class="table">
           <caption>Sample queries are shown below:</caption>
           <thead>
               <tr>
-                  <th>Query</th>
-                  <th>Result</th>
+                  <th>Token</th>
+                  <th>Description</th>
+                  <th>Sample Query</th>
               </tr>
           </thead>
           <tbody>
               <tr>
-                  <td><code>name:Person</code></td>
-                  <td>Returns items with "Person" in the name</td>
+                  <td><code><b>status</b>:argument</code></td>
+                  <td>
+                      Filters items to those that have the given registered state.
+                      This can only be used for items which can be registered.<br>
+                      Possible values:
+                      <ul>
+                      <li><code>incomplete</code> (or <code>inc</code>),
+                      <li><code>candidate</code> (or <code>can</code>),
+                      <li><code>recorded</code> (or <code>rec</code>),
+                      <li><code>qualified</code> (or <code>qual</code>),
+                      <li><code>standard</code> (or <code>st</code>),
+                      <li><code>preferred</code> (or <code>pref</code>) <br>(short for Preferred Standard),
+                      <li><code>superseded</code> (or <code>sup</code>), or
+                      <li><code>retired</code>  (or <code>retired</code>)
+                  </td>
+                  <td>
+                      Sample: <code>Business version:1.0.0</code><br>
+                      Result: Returns items where Person appears anywhere in the indexed text, and also has a version of "1.0.0".
+                  </td>
               </tr>
               <tr>
-                  <td><code>Person version:1.0.0</code></td>
+                  <td><code><b>id</b>:argument</code> or <code><b>identifier</b>:argument</code></td>
                   <td>
-                      Returns items where Person appears anywhere in the indexed text, and also has a version of "1.0.0"
-                      <div class="alert alert-warning" role="alert">Because of the nature of the search engine, search queries
-                      need to be at least 3 characters long.</div>
+                      Filters items that have an additional namespaced identifiers.
+                  </td>
+                  <td>
+                    Examples:
+                    <ul>
+                    <li><code>id:123485</code> - Returns all items that have an extra Identifier of "123485", with any version number.
+                    <li><code>id:my_org/123485</code> - Returns all items that have an extra Identifier of "123485" in the namespace "my_org", with any version number.
+                    <li><code>id:my_org/123485/2.0.1</code> - Returns the item that has the extra Identifier of "123485" in the namespace "my_org", with the version number "2.0.1".
+                    </ul
+                  </td>
+              </tr>
+              <tr>
+                  <td><code><b>name</b>:argument</code></td>
+                  <td>Filters items where the given argument is in the name field of the object.
+                  </td>
+                  <td>
+                    <code>name:Person</code><br>
+                    Result: Returns items with "Person" in the name
+                  </td>
+              </tr>
+              <tr>
+                  <td><code><b>namespace</b>:argument</code></td>
+                  <td>
+                      Filters items that have an additional namespaced identifiers with the specified namespace.
+                  </td>
+                  <td>
+                      Sample: <code>Person namespace:my_org</code><br>
+                      Result: Returns items where Person appears anywhere in the indexed text, and also has a namespace of "my_org".
+                  </td>
+              </tr>
+              <tr>
+                  <td><code><b>type</b>:argument</code></td>
+                  <td>
+                      Filters items to be of the given item type. This can be any metadata type, help page, or other indexed content.
+                  </td>
+                  <td>
+                      For examples, see below.
+                  </td>
+              </tr>
+              <tr>
+                  <td><code><b>version</b>:argument</code></td>
+                  <td>
+                      Filters items where the given argument is in the version field of the object.<br>
+                      Note: Because of the nature of the search engine, version queries
+                      need to be at least 3 characters long.
+                  </td>
+                  <td>
+                      Sample: <code>Person version:1.0.0</code><br>
+                      Result: Returns items where Person appears anywhere in the indexed text, and also has a version of "1.0.0".
                   </td>
               </tr>
           </tbody>

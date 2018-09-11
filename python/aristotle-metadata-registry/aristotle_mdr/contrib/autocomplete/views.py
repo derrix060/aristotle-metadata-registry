@@ -51,7 +51,8 @@ class GenericAutocomplete(autocomplete.Select2QuerySetView):
             {
                 'id': self.get_result_value(result),
                 'title': self.get_result_title(result),
-                'text': self.get_result_text(result),
+                'text': self.get_result_title(result),
+                'body': self.get_result_text(result),
             } for result in context['object_list']
         ]
 
@@ -86,7 +87,8 @@ class GenericConceptAutocomplete(GenericAutocomplete):
                 'id': self.get_result_value(result),
                 'uuid': str(result.uuid),
                 'title': self.get_result_title(result),
-                'text': self.get_result_text(result),
+                'text': self.get_result_title(result),
+                'body': self.get_result_text(result),
             } for result in context['object_list']
         ]
 
@@ -138,6 +140,36 @@ class UserAutocomplete(GenericAutocomplete):
 
             result.highlight[f] = field
         context = {"result": result, 'request': self.request}
+        return template.render(context)
+
+    def get_result_title(self, result):
+        """Return the title of a result."""
+        return six.text_type(result)
+
+
+class WorkgroupAutocomplete(GenericAutocomplete):
+    model = models.Workgroup
+    template_name = "aristotle_mdr/actions/autocompleteWorkgroup.html"
+
+    def get_queryset(self):
+        # Don't forget to filter out results depending on the visitor !
+        if not self.request.user.is_authenticated():
+            raise PermissionDenied
+
+        if self.q:
+            qs = self.request.user.profile.editable_workgroups.filter(
+                Q(definition__icontains=self.q) |
+                Q(name__icontains=self.q)
+            )
+        else:
+            qs = self.request.user.profile.editable_workgroups
+        return qs
+
+    def get_result_text(self, result):
+        """Return the label of a result."""
+
+        template = get_template(self.template_name)
+        context = {"choice": result, 'request': self.request}
         return template.render(context)
 
     def get_result_title(self, result):

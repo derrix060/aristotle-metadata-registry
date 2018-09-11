@@ -29,6 +29,6 @@ setup(
     ],
     install_requires = [
         'graphene-django>=2.0.0',
-        'django-filter'
+        'django-filter==1.1.0'
     ]
 )

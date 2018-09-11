@@ -633,7 +633,7 @@ class LoggedInViewPages(object):
                 raise
 
     def assertDelayedEqual(self, *args):
-        # This is useful when testing channels.
+        # This is useful when testing async code.
         # If updates aren't done in 1+2+3+4= 10seconds, then there is a problem.
         self.assertEqual(*args)
         return
@@ -674,3 +674,43 @@ class FormsetTestUtils:
         postdata.update(extra_postdata)
         response = self.client.post(url, postdata)
         return response
+
+class GeneralTestUtils:
+
+    def _status_check(self, response, kwargs):
+
+        if 'status_code' in kwargs:
+            self.assertEqual(response.status_code, kwargs['status_code'])
+
+    def _get_url(self, url_name, kwargs):
+        if 'reverse_args' in kwargs:
+            return reverse(url_name, args=kwargs['reverse_args'])
+        else:
+            return reverse(url_name)
+
+    def _reverse_request(self, function, url_name, *args, **kwargs):
+        url = self._get_url(url_name, kwargs)
+        request_function = getattr(self.client, function)
+        response = request_function(url, *args, **kwargs)
+        self._status_check(response, kwargs)
+        return response
+
+    def reverse_get(self, *args, **kwargs):
+        return self._reverse_request('get', *args, **kwargs)
+
+    def reverse_post(self, url_name, *args, **kwargs):
+        return self._reverse_request('post', *args, **kwargs)
+
+    def assertContext(self, response, key, value):
+
+        context = response.context
+        self.assertEqual(key in context)
+        self.assertEqual(context[key], value)
+
+    def assertInContext(response, key):
+
+        context = response.context
+        self.assertEqual(key in context)
+
+class AristotleTestUtils(LoggedInViewPages, GeneralTestUtils, FormsetTestUtils):
+    pass

@@ -8,6 +8,7 @@ py:obj ForeignKey
 py:obj OneToOneField
 py:obj RichTextUploadingField
 py:obj TextField
+py:obj ShortTextField
 py:obj URLField
 py:obj UUIDField
 py:obj boolean

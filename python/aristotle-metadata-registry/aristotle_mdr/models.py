@@ -11,7 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 from model_utils import Choices, FieldTracker
-from aristotle_mdr.contrib.channels.utils import fire
+from aristotle_mdr.contrib.async_signals.utils import fire
 import uuid
 
 import reversion  # import revisions
@@ -30,7 +30,13 @@ from aristotle_mdr.utils import (
 )
 from aristotle_mdr import comparators
 
-from .fields import ConceptForeignKey, ConceptManyToManyField, ShortTextField
+from .fields import (
+    ConceptForeignKey,
+    ConceptManyToManyField,
+    ShortTextField,
+    ConvertedConstrainedImageField
+)
+
 from .managers import (
     MetadataItemManager, ConceptManager,
     ReviewRequestQuerySet, WorkgroupQuerySet
@@ -76,7 +82,7 @@ class baseAristotleObject(TimeStampedModel):
         help_text=_("Universally-unique Identifier. Uses UUID1 as this improves uniqueness and tracking between registries"),
         unique=True, default=uuid.uuid1, editable=False, null=False
     )
-    name = models.TextField(
+    name = ShortTextField(
         help_text=_("The primary name used for human identification purposes.")
     )
     definition = RichTextField(
@@ -208,6 +214,13 @@ class Organization(registryGroup):
         return url_slugify_organization(self)
 
 
+RA_ACTIVE_CHOICES = Choices(
+    (0, 'active', _('Active & Visible')),
+    (1, 'inactive', _('Inactive & Visible')),
+    (2, 'hidden', _('Inactive & Hidden'))
+)
+
+
 class RegistrationAuthority(Organization):
     """
     8.1.2.5 - Registration_Authority class
@@ -219,6 +232,11 @@ class RegistrationAuthority(Organization):
     (8.1.5.1) association class.
     """
     template = "aristotle_mdr/organization/registrationAuthority.html"
+    active = models.IntegerField(
+        choices=RA_ACTIVE_CHOICES,
+        default=RA_ACTIVE_CHOICES.active,
+        help_text=_('Setting this to Inactive will disable all further registration actions')
+    )
     locked_state = models.IntegerField(
         choices=STATES,
         default=STATES.candidate
@@ -376,21 +394,22 @@ class RegistrationAuthority(Organization):
         return {'success': [item], 'failed': []}
 
     def _register(self, item, state, user, *args, **kwargs):
-        changeDetails = kwargs.get('changeDetails', "")
-        # If registrationDate is None (like from a form), override it with
-        # todays date.
-        registrationDate = kwargs.get('registrationDate', None) \
-            or timezone.now().date()
-        until_date = kwargs.get('until_date', None)
+        if self.active is RA_ACTIVE_CHOICES.active:
+            changeDetails = kwargs.get('changeDetails', "")
+            # If registrationDate is None (like from a form), override it with
+            # todays date.
+            registrationDate = kwargs.get('registrationDate', None) \
+                or timezone.now().date()
+            until_date = kwargs.get('until_date', None)
 
-        Status.objects.create(
-            concept=item,
-            registrationAuthority=self,
-            registrationDate=registrationDate,
-            state=state,
-            changeDetails=changeDetails,
-            until_date=until_date
-        )
+            Status.objects.create(
+                concept=item,
+                registrationAuthority=self,
+                registrationDate=registrationDate,
+                state=state,
+                changeDetails=changeDetails,
+                until_date=until_date
+            )
 
     def list_roles_for_user(self, user):
         roles = []
@@ -415,6 +434,14 @@ class RegistrationAuthority(Organization):
     @property
     def members(self):
         return (self.managers.all() | self.registrars.all()).distinct()
+
+    @property
+    def is_active(self):
+        return self.active == RA_ACTIVE_CHOICES.active
+
+    @property
+    def is_visible(self):
+        return not self.active == RA_ACTIVE_CHOICES.hidden
 
 
 @receiver(post_save, sender=RegistrationAuthority)
@@ -483,10 +510,10 @@ class Workgroup(registryGroup):
 
     @property
     def members(self):
-        return self.viewers.all() \
-            | self.submitters.all() \
-            | self.stewards.all() \
-            | self.managers.all()
+        return (
+            self.viewers.all() | self.submitters.all() |
+            self.stewards.all() | self.managers.all()
+        ).distinct().order_by('full_name')
 
     def can_view(self, user):
         return self.members.filter(pk=user.pk).exists()
@@ -613,14 +640,18 @@ class _concept(baseAristotleObject):
     references = RichTextField(blank=True)
     origin_URI = models.URLField(
         blank=True,
-        help_text="If imported, the original location of the item"
+        help_text=_("If imported, the original location of the item")
+    )
+    origin = RichTextField(
+        help_text=_("The source (e.g. document, project, discipline or model) for the item (8.1.2.2.3.5)"),
+        blank=True
     )
     comments = RichTextField(
         help_text=_("Descriptive comments about the metadata item (8.1.2.2.3.4)"),
         blank=True
     )
-    submitting_organisation = models.CharField(max_length=256, blank=True)
-    responsible_organisation = models.CharField(max_length=256, blank=True)
+    submitting_organisation = ShortTextField(blank=True)
+    responsible_organisation = ShortTextField(blank=True)
 
     superseded_by = ConceptForeignKey(
         'self',
@@ -1006,9 +1037,10 @@ class ConceptualDomain(concept):
     description = models.TextField(
         _('description'),
         blank=True,
-        help_text=('Description or specification of a rule, reference, or '
-                   'range for a set of all value meanings for a Conceptual '
-                   'Domain')
+        help_text=_(
+            ('Description or specification of a rule, reference, or '
+             'range for a set of all value meanings for a Conceptual Domain')
+        )
     )
     serialize_weak_entities = [
         ('value_meaning', 'valuemeaning_set'),
@@ -1036,12 +1068,12 @@ class ValueMeaning(aristotleComponent):
     start_date = models.DateField(
         blank=True,
         null=True,
-        help_text='Date at which the value meaning became valid'
+        help_text=_('Date at which the value meaning became valid')
     )
     end_date = models.DateField(
         blank=True,
         null=True,
-        help_text='Date at which the value meaning ceased to be valid'
+        help_text=_('Date at which the value meaning ceased to be valid')
     )
 
     def __str__(self):
@@ -1155,12 +1187,12 @@ class AbstractValue(aristotleComponent):
     start_date = models.DateField(
         blank=True,
         null=True,
-        help_text='Date at which the value became valid'
+        help_text=_('Date at which the value became valid')
     )
     end_date = models.DateField(
         blank=True,
         null=True,
-        help_text='Date at which the value ceased to be valid'
+        help_text=_('Date at which the value ceased to be valid')
     )
 
     def __str__(self):
@@ -1341,6 +1373,23 @@ class PossumProfile(models.Model):
         related_name='favourited_by',
         blank=True
     )
+    profilePictureWidth = models.IntegerField(
+        blank=True,
+        null=True
+    )
+    profilePictureHeight = models.IntegerField(
+        blank=True,
+        null=True
+    )
+    profilePicture = ConvertedConstrainedImageField(
+        blank=True,
+        null=True,
+        height_field='profilePictureHeight',
+        width_field='profilePictureWidth',
+        max_upload_size=((1024**2) * 10),  # 10 MB
+        content_types=['image/jpg', 'image/png', 'image/bmp', 'image/jpeg'],
+        js_checker=True
+    )
 
     # Override save for inline creation of objects.
     # http://stackoverflow.com/questions/2813189/django-userprofile-with-unique-foreign-key-in-django-admin
@@ -1350,6 +1399,7 @@ class PossumProfile(models.Model):
             self.id = existing.id  # Force update instead of insert.
         except PossumProfile.DoesNotExist:  # pragma: no cover
             pass
+
         models.Model.save(self, *args, **kwargs)
 
     @property
@@ -1370,7 +1420,21 @@ class PossumProfile(models.Model):
 
     @property
     def myWorkgroups(self):
-        return self.workgroups.filter(archived=False)
+        return (
+            self.user.viewer_in.all() |
+            self.user.submitter_in.all() |
+            self.user.steward_in.all() |
+            self.user.workgroup_manager_in.all()
+        ).filter(archived=False).distinct()
+
+    @property
+    def myWorkgroupCount(self):
+        # When only a count is required, querying with union is much faster
+        vi = self.user.viewer_in.filter(archived=False)
+        si = self.user.submitter_in.filter(archived=False)
+        sti = self.user.steward_in.filter(archived=False)
+        mi = self.user.workgroup_manager_in.filter(archived=False)
+        return vi.union(si).union(sti).union(mi).count()
 
     @property
     def editable_workgroups(self):
@@ -1385,6 +1449,15 @@ class PossumProfile(models.Model):
     @property
     def is_registrar(self):
         return perms.user_is_registrar(self.user)
+
+    @property
+    def is_ra_manager(self):
+        user = self.user
+        if user.is_anonymous():
+            return False
+        if user.is_superuser:
+            return True
+        return RegistrationAuthority.objects.filter(managers__pk=user.pk).count() > 0
 
     @property
     def discussions(self):

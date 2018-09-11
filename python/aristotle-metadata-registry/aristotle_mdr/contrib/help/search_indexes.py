@@ -32,6 +32,12 @@ class HelpObjectIndex(baseObjectIndex):
         ct = ContentType.objects.get_for_model(obj)
         return ct.pk
 
+    def prepare(self, obj):
+        # Slightly down-rank help in search
+        data = super().prepare(obj)
+        data['boost'] = 0.95
+        return data
+
 
 class ConceptHelpIndex(HelpObjectIndex, indexes.Indexable):
     template_name = "search/searchConceptHelp.html"

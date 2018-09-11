@@ -1,9 +1,5 @@
-Your metadata registry "{{ registry.name|safe }}" is almost ready.
+Almost ready.
 
-To complete registration, follow the link below to create your user account.
+To complete your registration, follow the link below to activate your account.
 
-<a href="{{scheme}}://{{ registry.get_absolute_url }}{% url "invitations_register" user.id token %}">
-{{scheme}}://{{ registry.get_absolute_url }}{% url "invitations_register" user.id token %}
-</a>
-
-Once you have entered your details, your registry is ready to go!
+ {{request.scheme}}://{{ request.META.HTTP_HOST }}{% url accept_url_name user_id token %}

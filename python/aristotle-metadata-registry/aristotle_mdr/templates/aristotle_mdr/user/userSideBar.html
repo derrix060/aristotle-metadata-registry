@@ -52,30 +52,14 @@
     <li {% ifequal activeTab "workgroups" %}class="active"{% endifequal %}>
         <a href="{% url 'aristotle:userWorkgroups' %}">
         <i class="fa fa-users fa-fw"></i> {% trans "Workgroups" %}
-        <span class="badge pull-right">{{ user.profile.myWorkgroups.count }}</span></a>
-        {% if subWorkgroups %}
-        <ul class="nav nav-pills nav-stacked nav-collapse dashSubMenu">
-            <li><a href="{% url 'aristotle:user_workgroups_archives' %}">
-                <i class="fa fa-archive"></i>
-                {% trans "Archived Workgroups" %}</a></li>
-            {% for item in subWorkgroups %}
-            <li>
-                <a href="{% url 'aristotle:workgroup' item.id %}">{{ item }}</a>
-            </li>
-            {% endfor %}
-        </ul>
-        {% elif subWorkgroup %}
-        <ul class="nav nav-pills nav-stacked nav-collapse dashSubMenu">
-            <li class="active">
-                <a href="{% url 'aristotle:workgroup' item.id %}">{{ item }}</a>
-            </li>
-        </ul>
-        {% endif %}
+        <span class="badge pull-right">{{ user.profile.myWorkgroupCount }}</span></a>
         {% ifequal activeTab "workgroupArchives" %}
         <ul class="nav nav-pills nav-stacked nav-collapse dashSubMenu">
             <li class="active">
-                <i class="fa fa-archive"></i>
-                <a href="{% url 'aristotle:user_workgroups_archives' %}">{% trans "Archived Workgroups" %}</a>
+                <a href="{% url 'aristotle:user_workgroups_archives' %}">
+                  <i class="fa fa-archive fa-fw"></i>
+                  {% trans "Archived Workgroups" %}
+                </a>
             </li>
         </ul>
         {% endifequal %}
@@ -101,19 +85,21 @@
         <a href="{% url 'aristotle:userRoles' %}">
         <i class="fa fa-industry fa-fw"></i> My roles</a>
     </li>
-    {% if request.user.profile.is_registrar %}
+    {% if request.user.profile.is_registrar or request.user.profile.is_ra_manager %}
     <li {% ifequal activeTab "registrarTools" %}class="active"{% endifequal %}>
         <a href="{% url 'aristotle:userRegistrarTools' %}">
         <i class="fa fa-institution fa-fw"></i> {% trans "Registrar tools" %}
         </a>
-        {% ifequal activeTab "registrarTools" %}
-        <ul class="nav nav-pills nav-stacked nav-collapse dashSubMenu">
-            <li><a href="{% url 'aristotle:userReadyForReview' %}">
-                {% comment %}Translators: A link to the list of things to be reviewed.{% endcomment %}
-                <i class="fa fa-flag fa-fw"></i> {% trans 'Review list' %}
-            </a></li>
-        </ul>
-        {% endifequal %}
+        {% if request.user.profile.is_registrar %}
+          {% ifequal activeTab "registrarTools" %}
+          <ul class="nav nav-pills nav-stacked nav-collapse dashSubMenu">
+              <li><a href="{% url 'aristotle:userReadyForReview' %}">
+                  {% comment %}Translators: A link to the list of things to be reviewed.{% endcomment %}
+                  <i class="fa fa-flag fa-fw"></i> {% trans 'Review list' %}
+              </a></li>
+          </ul>
+          {% endifequal %}
+        {% endif %}
     </li>
     {% endif %}
     {% if perms.aristotle_mdr.access_aristotle_dashboard %}

@@ -18,7 +18,14 @@
     <ul>
         {% for ra in registrationAuthorities %}
         <li>
-        <a href="{% url 'aristotle:registrationAuthority' ra.id '' %}">{{ ra.name }}</a>
+        <a 
+          {% if not ra.is_active %}class="text-muted"{% endif %} 
+          href="{% url 'aristotle:registrationAuthority' ra.id '' %}">
+              {{ ra.name }}
+              {% if not ra.is_active %}
+                (inactive)
+              {% endif %}
+        </a>
         <div>
             {{ ra.definition | striptags |truncatewords:50 }}
         </div>

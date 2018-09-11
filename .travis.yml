@@ -31,11 +31,6 @@ defaults:
         esac
         echo "Running script with DATABASE_URL="$DATABASE_URL
         echo "Running script with DB="$DB
-        echo $TRAVIS_BRANCH
-        echo "HEAD to TRAVIS_BRANCH"
-        git diff --name-only HEAD...$TRAVIS_BRANCH
-        echo "TRAVIS_BRANCH to HEAD"
-        git diff --name-only $TRAVIS_BRANCH...HEAD
         ./scripts/tox_if.sh dj$DJANGO_VERSION-test-linux-db-$DB-search-$SEARCH-module_$MODULE
     services:
       - postgresql
@@ -155,5 +150,4 @@ after_success:
   - ./scripts/coverage_reporter.sh $MODULE
 
 notifications:
-
   webhooks: https://outlook.office.com/webhook/4fa8f482-f261-4599-b76a-ba888c6820aa@1f298417-594f-4f6d-9bdb-8de767590d70/TravisCI/f4b13393a46b434288af9a0b1b2d4db1/1dbc8307-f5fb-45a9-b87f-4e128b5d9895

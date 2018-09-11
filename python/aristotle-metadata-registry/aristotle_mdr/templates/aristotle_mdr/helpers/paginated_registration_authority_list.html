@@ -43,11 +43,18 @@ Showing {{ page.paginator.count }} results.
     {% for item in page %}
     <tr>
         <td>
-            {% if manage %}
-            <a href="{% url 'aristotle:registrationauthority_details' item.id %}">{{ item.name }}</a>
-            {% else %}
-            <a href="{{ item.get_absolute_url }}">{{ item.name }}</a>
-            {% endif %}
+            <a 
+              {% if not item.is_active %}class="text-muted"{% endif %} 
+              {% if manage %}
+                href="{% url 'aristotle:registrationauthority_details' item.id %}"
+              {% else %}
+                href="{{ item.get_absolute_url }}"
+              {% endif %}>
+                {{ item.name }}
+                {% if not item.is_active %}
+                  (inactive)
+                {% endif %}
+            </a>
         </td>
         <td>{{ item.definition|striptags|safe|truncatewords:50 }}</td>
         <td>{{ item.user_count }}</td>

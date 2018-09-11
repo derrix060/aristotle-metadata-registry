@@ -1,0 +1,13 @@
+{% load i18n l10n %}
+{% load static %}
+
+<span class="autocomplete-item block" data-html="true" data-value="{{ choice.pk|unlocalize }}">
+    <strong class="title" data-name="{{ choice.name }}" >
+    {{ choice.name }}
+    </strong>
+    <div class="details">
+        <p>
+        {{ choice.definition|truncatewords:20|striptags }}
+        </p>
+    </div>
+</span>

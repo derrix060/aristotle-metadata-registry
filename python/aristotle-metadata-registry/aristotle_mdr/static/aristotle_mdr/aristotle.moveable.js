@@ -107,7 +107,7 @@ function addCode(id) {
 function renumberRow(row,num) {
     order_fields = $(row).find('input[name$="-ORDER"]')
     if (order_fields.length > 0) {
-      order_field.attr('value',num);
+      order_fields.attr('value',num);
     } else {
       $(row).find('input[name$="-order"]').attr('value', num)
     }

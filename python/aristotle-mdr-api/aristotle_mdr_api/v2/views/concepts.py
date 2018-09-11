@@ -48,7 +48,9 @@ class ConceptSerializerBase(serializers.ModelSerializer):
         return out
 
 class ConceptListSerializer(DescriptionStubSerializerMixin,ConceptSerializerBase):
-    pass
+    class Meta:
+        model = models._concept
+        fields = standard_fields + ('definition', 'name')
 
 class ConceptDetailSerializer(ConceptSerializerBase):
     fields = serializers.SerializerMethodField('get_extra_fields')
@@ -61,11 +63,6 @@ class ConceptDetailSerializer(ConceptSerializerBase):
         super().__init__(*args, **kwargs)
         self.pyserializer = Serializer()
 
-        if self.instance:
-            self.serialized_object = self.get_serialized_object(self.instance)
-        else:
-            self.serialized_object = {}
-
     def get_serialized_object(self, instance):
         return self.pyserializer.serialize([instance.item], context=self.context)[0]
 
@@ -74,21 +71,22 @@ class ConceptDetailSerializer(ConceptSerializerBase):
         fields = standard_fields+('fields','statuses','ids','slots', 'links')
 
     def get_extra_fields(self, instance):
-        return self.serialized_object.get('fields',[])
+        return self.get_serialized_object(instance).get('fields',[])
 
     def get_identifiers(self, instance):
-        return self.serialized_object.get('identifiers',[])
+        return self.get_serialized_object(instance).get('identifiers',[])
 
     def get_slots(self, instance):
-        return self.serialized_object.get('slots', [])
+        return self.get_serialized_object(instance).get('slots', [])
 
     def get_links(self, instance):
-        return self.serialized_object.get('links', [])
+        return self.get_serialized_object(instance).get('links', [])
 
     def get_statuses(self, instance):
-        return self.serialized_object.get('statuses',[])
+        return self.get_serialized_object(instance).get('statuses',[])
 
 class ConceptViewSet(
+    MultiSerializerViewSetMixin,
     UUIDLookupModelMixin,
     #mixins.RetrieveModelMixin,
                     #mixins.UpdateModelMixin,
@@ -107,12 +105,16 @@ class ConceptViewSet(
     """
 
     queryset = models._concept.objects.all()
-    serializer_class = ConceptDetailSerializer
     pagination_class = ConceptResultsPagination
     filter_backends = (concept_backend.ConceptFilterBackend,)
     filter_class = concept_backend.ConceptFilter
 
     permission_key = 'metadata'
+
+    serializers = {
+        'default': ConceptDetailSerializer,
+        'list': ConceptListSerializer
+    }
 
 
     def get_queryset(self):
